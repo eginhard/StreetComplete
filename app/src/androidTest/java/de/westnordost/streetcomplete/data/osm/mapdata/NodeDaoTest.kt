@@ -7,6 +7,7 @@ import de.westnordost.streetcomplete.data.ApplicationDbTestCase
 import de.westnordost.osmapi.map.data.Node
 import de.westnordost.osmapi.map.data.OsmNode
 import de.westnordost.streetcomplete.ktx.containsExactlyInAnyOrder
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.*
 import java.lang.System.currentTimeMillis
 
@@ -15,10 +16,10 @@ class NodeDaoTest : ApplicationDbTestCase() {
     private lateinit var dao: NodeDao
 
     @Before fun createDao() {
-        dao = NodeDao(dbHelper, serializer)
+        dao = NodeDao(database, serializer)
     }
 
-    @Test fun putGetNoTags() {
+    @Test fun putGetNoTags() = runBlocking {
         val node = nd(5, tags = null)
         dao.put(node)
         val dbNode = dao.get(5)
@@ -26,7 +27,7 @@ class NodeDaoTest : ApplicationDbTestCase() {
         checkEqual(node, dbNode!!)
     }
 
-    @Test fun putGetWithTags() {
+    @Test fun putGetWithTags() = runBlocking {
         val node = nd(5, 1, 2.0, 2.0, mapOf("a key" to "a value"))
         dao.put(node)
         val dbNode = dao.get(5)
@@ -34,17 +35,17 @@ class NodeDaoTest : ApplicationDbTestCase() {
         checkEqual(node, dbNode!!)
     }
 
-    @Test fun putOverwrites() {
+    @Test fun putOverwrites() = runBlocking {
         dao.put(nd(6, 0))
         dao.put(nd(6, 5))
         assertEquals(5, dao.get(6)!!.version)
     }
 
-    @Test fun getNull() {
+    @Test fun getNull() = runBlocking {
         assertNull(dao.get(6))
     }
 
-    @Test fun delete() {
+    @Test fun delete() = runBlocking {
         assertFalse(dao.delete(6))
         dao.put(nd(6))
         assertTrue(dao.delete(6))
@@ -52,13 +53,13 @@ class NodeDaoTest : ApplicationDbTestCase() {
         assertFalse(dao.delete(6))
     }
 
-    @Test fun putAll() {
+    @Test fun putAll() = runBlocking {
         dao.putAll(listOf(nd(1), nd(2)))
         assertNotNull(dao.get(1))
         assertNotNull(dao.get(2))
     }
 
-    @Test fun getAll() {
+    @Test fun getAll() = runBlocking {
         val e1 = nd(1)
         val e2 = nd(2)
         val e3 = nd(3)
@@ -66,7 +67,7 @@ class NodeDaoTest : ApplicationDbTestCase() {
         assertEquals(listOf(e1, e2).map { it.id }, dao.getAll(listOf(1,2,4)).map { it.id })
     }
 
-    @Test fun deleteAll() {
+    @Test fun deleteAll() = runBlocking {
         dao.putAll(listOf(nd(1), nd(2), nd(3)))
         assertEquals(2,dao.deleteAll(listOf(1,2,4)))
         assertNotNull(dao.get(3))
@@ -74,7 +75,7 @@ class NodeDaoTest : ApplicationDbTestCase() {
         assertNull(dao.get(2))
     }
 
-    @Test fun getUnusedAndOldIds() {
+    @Test fun getUnusedAndOldIds() = runBlocking {
         dao.putAll(listOf(nd(1L), nd(2L), nd(3L)))
         val unusedIds = dao.getIdsOlderThan(currentTimeMillis() + 10)
         assertTrue(unusedIds.containsExactlyInAnyOrder(listOf(1L, 2L, 3L)))

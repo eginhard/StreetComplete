@@ -5,6 +5,7 @@ import de.westnordost.osmapi.map.data.LatLon
 import de.westnordost.osmapi.map.data.OsmLatLon
 import de.westnordost.streetcomplete.data.ApplicationDbTestCase
 import de.westnordost.streetcomplete.ktx.containsExactlyInAnyOrder
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
@@ -13,10 +14,10 @@ class NoteEditsDaoTest : ApplicationDbTestCase() {
     private lateinit var dao: NoteEditsDao
 
     @Before fun createDao() {
-        dao = NoteEditsDao(dbHelper, serializer)
+        dao = NoteEditsDao(database, serializer)
     }
 
-    @Test fun addGet() {
+    @Test fun addGet() = runBlocking {
         val edit = edit(noteId = 1L)
         dao.add(edit)
         assertNotNull(edit.id)
@@ -24,7 +25,7 @@ class NoteEditsDaoTest : ApplicationDbTestCase() {
         assertEquals(edit, dbEdit)
     }
 
-    @Test fun addGetDelete() {
+    @Test fun addGetDelete() = runBlocking {
         val edit = edit(noteId = 1L)
         // nothing there
         assertFalse(dao.delete(1L))
@@ -39,7 +40,7 @@ class NoteEditsDaoTest : ApplicationDbTestCase() {
         assertNull(dao.get(edit.id))
     }
 
-    @Test fun getAll() {
+    @Test fun getAll() = runBlocking {
         val e1 = edit(timestamp = 100)
         val e2 = edit(timestamp = 10)
         val e3 = edit(timestamp = 1000)
@@ -50,7 +51,7 @@ class NoteEditsDaoTest : ApplicationDbTestCase() {
         assertEquals(listOf(e2, e1, e3), dao.getAll())
     }
 
-    @Test fun getAllUnsynced() {
+    @Test fun getAllUnsynced() = runBlocking {
         val e1 = edit(timestamp = 10)
         val e2 = edit(timestamp = 100)
         val e3 = edit(timestamp = 1000)
@@ -62,7 +63,7 @@ class NoteEditsDaoTest : ApplicationDbTestCase() {
         assertEquals(listOf(e1, e2, e3), dao.getAllUnsynced())
     }
 
-    @Test fun getAllUnsyncedForNote() {
+    @Test fun getAllUnsyncedForNote() = runBlocking {
         val e1 = edit(noteId = 1L, timestamp = 10)
         val e2 = edit(noteId = 2L, timestamp = 100)
         val e3 = edit(noteId = 1L, timestamp = 1000)
@@ -74,7 +75,7 @@ class NoteEditsDaoTest : ApplicationDbTestCase() {
         assertEquals(listOf(e1, e3), dao.getAllUnsyncedForNote(1L))
     }
 
-    @Test fun getAllUnsyncedForNotes() {
+    @Test fun getAllUnsyncedForNotes() = runBlocking {
         val e1 = edit(noteId = 1L, timestamp = 10)
         val e2 = edit(noteId = 2L, timestamp = 100)
         val e3 = edit(noteId = 1L, timestamp = 1000)
@@ -87,7 +88,7 @@ class NoteEditsDaoTest : ApplicationDbTestCase() {
         assertEquals(listOf(e1, e3, e5), dao.getAllUnsyncedForNotes(listOf(1L, 3L, 4L)))
     }
 
-    @Test fun getAllUnsyncedForBounds() {
+    @Test fun getAllUnsyncedForBounds() = runBlocking {
         val posIn1 = OsmLatLon(0.0, 0.0)
         val posIn2 = OsmLatLon(0.5, 0.0)
         val posOut1 = OsmLatLon(-0.5, 0.0)
@@ -109,7 +110,7 @@ class NoteEditsDaoTest : ApplicationDbTestCase() {
         assertEquals(listOf(e5, e6), dao.getAllUnsynced(BoundingBox(0.0, 0.0, 1.0, 2.0)))
     }
 
-    @Test fun getAllUnsyncedPositionsForBounds() {
+    @Test fun getAllUnsyncedPositionsForBounds() = runBlocking {
         val posIn1 = OsmLatLon(0.0, 0.0)
         val posIn2 = OsmLatLon(0.0, 0.0)
         val posOut1 = OsmLatLon(-0.5, 0.0)
@@ -131,7 +132,7 @@ class NoteEditsDaoTest : ApplicationDbTestCase() {
         assertEquals(listOf(posIn1, posIn2), dao.getAllUnsyncedPositions(BoundingBox(0.0, 0.0, 1.0, 2.0)))
     }
 
-    @Test fun markSynced() {
+    @Test fun markSynced() = runBlocking {
         val edit = edit(isSynced = false)
         dao.add(edit)
         val id = edit.id
@@ -140,7 +141,7 @@ class NoteEditsDaoTest : ApplicationDbTestCase() {
         assertTrue(dao.get(id)!!.isSynced)
     }
 
-    @Test fun peekUnsynced() {
+    @Test fun peekUnsynced() = runBlocking {
         assertNull(dao.getOldestUnsynced())
 
         val e1 = edit(isSynced = true)
@@ -160,7 +161,7 @@ class NoteEditsDaoTest : ApplicationDbTestCase() {
         assertEquals(e4, dao.getOldestUnsynced())
     }
 
-    @Test fun getUnsyncedCount() {
+    @Test fun getUnsyncedCount() = runBlocking {
         assertEquals(0, dao.getUnsyncedCount())
 
         dao.add(edit(isSynced = true))
@@ -173,7 +174,7 @@ class NoteEditsDaoTest : ApplicationDbTestCase() {
         assertEquals(2, dao.getUnsyncedCount())
     }
 
-    @Test fun deleteSyncedOlderThan() {
+    @Test fun deleteSyncedOlderThan() = runBlocking {
         val oldEnough = edit(timestamp = 500, isSynced = true)
         val tooYoung = edit(timestamp = 1000, isSynced = true)
         val notSynced = edit(timestamp = 500, isSynced = false)
@@ -184,7 +185,7 @@ class NoteEditsDaoTest : ApplicationDbTestCase() {
         assertTrue(dao.getAll().containsExactlyInAnyOrder(listOf(tooYoung, notSynced)))
     }
 
-    @Test fun updateNoteId() {
+    @Test fun updateNoteId() = runBlocking {
         assertEquals(0, dao.updateNoteId( -5, 6))
 
         val e1 = edit(noteId = -5)
@@ -196,7 +197,7 @@ class NoteEditsDaoTest : ApplicationDbTestCase() {
         assertEquals(6, dao.get(e2.id)!!.noteId)
     }
 
-    @Test fun markImagesActivated() {
+    @Test fun markImagesActivated() = runBlocking {
         val edit = edit(isSynced = true, imagePaths = listOf("a", "b"))
         dao.add(edit)
         val id = edit.id
@@ -205,7 +206,7 @@ class NoteEditsDaoTest : ApplicationDbTestCase() {
         assertFalse(dao.get(id)!!.imagesNeedActivation)
     }
 
-    @Test fun peekNeedingImagesActivation() {
+    @Test fun peekNeedingImagesActivation() = runBlocking {
         assertNull(dao.getOldestNeedingImagesActivation())
 
         val e1 = edit(isSynced = true, imagePaths = listOf())
@@ -226,7 +227,7 @@ class NoteEditsDaoTest : ApplicationDbTestCase() {
     }
 }
 
-private fun NoteEditsDao.addAll(vararg edits: NoteEdit) = edits.forEach { add(it) }
+private suspend fun NoteEditsDao.addAll(vararg edits: NoteEdit) = edits.forEach { add(it) }
 
 private fun edit(
     noteId: Long = 1L,

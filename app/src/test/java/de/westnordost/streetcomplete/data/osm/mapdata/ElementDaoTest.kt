@@ -8,6 +8,7 @@ import de.westnordost.streetcomplete.testutils.mock
 import de.westnordost.streetcomplete.testutils.node
 import de.westnordost.streetcomplete.testutils.way
 import de.westnordost.streetcomplete.testutils.rel
+import kotlinx.coroutines.runBlocking
 
 import org.mockito.Mockito.*
 
@@ -24,70 +25,70 @@ class ElementDaoTest {
         dao = ElementDao(nodeDao, wayDao, relationDao)
     }
 
-    @Test fun putNode() {
+    @Test fun putNode(): Unit = runBlocking {
         val node = node(1)
         dao.put(node)
         verify(nodeDao).put(node)
     }
 
-    @Test fun getNode() {
+    @Test fun getNode(): Unit = runBlocking {
         dao.get(Element.Type.NODE, 1L)
         verify(nodeDao).get(1L)
     }
 
-    @Test fun deleteNode() {
+    @Test fun deleteNode(): Unit = runBlocking {
         dao.delete(Element.Type.NODE, 1L)
         verify(nodeDao).delete(1L)
     }
 
-    @Test fun putWay() {
+    @Test fun putWay(): Unit = runBlocking {
         val way = way()
         dao.put(way)
         verify(wayDao).put(way)
     }
 
-    @Test fun getWay() {
+    @Test fun getWay(): Unit = runBlocking {
         dao.get(Element.Type.WAY, 1L)
         verify(wayDao).get(1L)
     }
 
-    @Test fun deleteWay() {
+    @Test fun deleteWay(): Unit = runBlocking {
         dao.delete(Element.Type.WAY, 1L)
         verify(wayDao).delete(1L)
     }
 
-    @Test fun putRelation() {
+    @Test fun putRelation(): Unit = runBlocking {
         val relation = rel()
         dao.put(relation)
         verify(relationDao).put(relation)
     }
 
-    @Test fun getRelation() {
+    @Test fun getRelation(): Unit = runBlocking {
         dao.get(Element.Type.RELATION, 1L)
         verify(relationDao).get(1L)
     }
 
-    @Test fun deleteRelation() {
+    @Test fun deleteRelation(): Unit = runBlocking {
         dao.delete(Element.Type.RELATION, 1L)
         verify(relationDao).delete(1L)
     }
 
-    @Test fun putAllRelations() {
+    @Test fun putAllRelations(): Unit = runBlocking {
         dao.putAll(listOf(rel()))
         verify(relationDao).putAll(anyCollection())
     }
 
-    @Test fun putAllWays() {
+    @Test fun putAllWays(): Unit = runBlocking {
         dao.putAll(listOf(way()))
         verify(wayDao).putAll(anyCollection())
     }
 
-    @Test fun putAllNodes() {
+    @Test fun putAllNodes(): Unit = runBlocking {
         dao.putAll(listOf(node()))
         verify(nodeDao).putAll(anyCollection())
     }
 
-    @Test fun putAllElements() {
+    @Test fun putAllElements(): Unit = runBlocking {
         dao.putAll(listOf(node(), way(), rel()))
 
         verify(nodeDao).putAll(anyCollection())
@@ -95,7 +96,7 @@ class ElementDaoTest {
         verify(relationDao).putAll(anyCollection())
     }
 
-    @Test fun deleteAllElements() {
+    @Test fun deleteAllElements(): Unit = runBlocking {
         dao.deleteAll(listOf(
             ElementKey(Element.Type.NODE,0),
             ElementKey(Element.Type.WAY,0),
@@ -107,7 +108,7 @@ class ElementDaoTest {
         verify(relationDao).deleteAll(listOf(0L))
     }
 
-    @Test fun getAllElements() {
+    @Test fun getAllElements(): Unit = runBlocking {
         dao.getAll(listOf(
             ElementKey(Element.Type.NODE,0),
             ElementKey(Element.Type.WAY,0),

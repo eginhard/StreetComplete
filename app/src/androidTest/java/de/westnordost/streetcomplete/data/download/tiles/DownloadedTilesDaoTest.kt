@@ -6,6 +6,7 @@ import org.junit.Test
 import de.westnordost.streetcomplete.data.ApplicationDbTestCase
 import de.westnordost.streetcomplete.util.TilePos
 import de.westnordost.streetcomplete.util.TilesRect
+import kotlinx.coroutines.runBlocking
 
 import org.junit.Assert.*
 
@@ -13,10 +14,10 @@ class DownloadedTilesDaoTest : ApplicationDbTestCase() {
     private lateinit var dao: DownloadedTilesDao
 
     @Before fun createDao() {
-        dao = DownloadedTilesDao(dbHelper)
+        dao = DownloadedTilesDao(database)
     }
 
-    @Test fun putGetOne() {
+    @Test fun putGetOne() = runBlocking {
         dao.put(r(5, 8, 5, 8), "Huhu")
         val huhus = dao.get(r(5, 8, 5, 8), 0)
 
@@ -24,13 +25,13 @@ class DownloadedTilesDaoTest : ApplicationDbTestCase() {
         assertTrue(huhus.contains("Huhu"))
     }
 
-    @Test fun putGetOld() {
+    @Test fun putGetOld() = runBlocking {
         dao.put(r(5, 8, 5, 8), "Huhu")
         val huhus = dao.get(r(5, 8, 5, 8), System.currentTimeMillis() + 1000)
         assertTrue(huhus.isEmpty())
     }
 
-    @Test fun putSomeOld() {
+    @Test fun putSomeOld() = runBlocking {
         dao.put(r(0, 0, 1, 3), "Huhu")
         Thread.sleep(2000)
         dao.put(r(1, 3, 5, 5), "Huhu")
@@ -38,25 +39,25 @@ class DownloadedTilesDaoTest : ApplicationDbTestCase() {
         assertTrue(huhus.isEmpty())
     }
 
-    @Test fun putMoreGetOne() {
+    @Test fun putMoreGetOne() = runBlocking {
         dao.put(r(5, 8, 6, 10), "Huhu")
         assertFalse(dao.get(r(5, 8, 5, 8), 0).isEmpty())
         assertFalse(dao.get(r(6, 10, 6, 10), 0).isEmpty())
     }
 
-    @Test fun putOneGetMore() {
+    @Test fun putOneGetMore() = runBlocking {
         dao.put(r(5, 8, 5, 8), "Huhu")
         assertTrue(dao.get(r(5, 8, 5, 9), 0).isEmpty())
     }
 
-    @Test fun remove() {
+    @Test fun remove() = runBlocking {
         dao.put(r(0, 0, 3, 3), "Huhu")
         dao.put(r(0, 0, 0, 0), "Haha")
         dao.put(r(1, 1, 3, 3), "Hihi")
         assertEquals(2, dao.remove(TilePos(0, 0))) // removes huhu, haha at 0,0
     }
 
-    @Test fun putSeveralQuestTypes() {
+    @Test fun putSeveralQuestTypes() = runBlocking {
         dao.put(r(0, 0, 5, 5), "Huhu")
         dao.put(r(4, 4, 6, 6), "hoho")
         dao.put(r(4, 0, 4, 7), "hihi")

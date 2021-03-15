@@ -4,6 +4,7 @@ import org.junit.Before
 import org.junit.Test
 
 import de.westnordost.streetcomplete.data.ApplicationDbTestCase
+import kotlinx.coroutines.runBlocking
 
 import org.junit.Assert.*
 import org.mockito.Mockito.*
@@ -12,14 +13,14 @@ class QuestStatisticsDaoTest : ApplicationDbTestCase() {
     private lateinit var dao: QuestStatisticsDao
 
     @Before fun createDao() {
-        dao = QuestStatisticsDao(dbHelper)
+        dao = QuestStatisticsDao(database)
     }
 
-    @Test fun getZero() {
+    @Test fun getZero() = runBlocking {
         assertEquals(0, dao.getAmount(ONE))
     }
 
-    @Test fun getOne() {
+    @Test fun getOne() = runBlocking {
         val listener = mock(QuestStatisticsDao.Listener::class.java)
         dao.addListener(listener)
         dao.addOne(ONE)
@@ -27,7 +28,7 @@ class QuestStatisticsDaoTest : ApplicationDbTestCase() {
         verify(listener).onAddedOne(ONE)
     }
 
-    @Test fun getTwo() {
+    @Test fun getTwo() = runBlocking {
         val listener = mock(QuestStatisticsDao.Listener::class.java)
         dao.addListener(listener)
         dao.addOne(ONE)
@@ -36,14 +37,14 @@ class QuestStatisticsDaoTest : ApplicationDbTestCase() {
         verify(listener, times(2)).onAddedOne(ONE)
     }
 
-    @Test fun getTotal() {
+    @Test fun getTotal() = runBlocking {
         dao.addOne(ONE)
         dao.addOne(ONE)
         dao.addOne(TWO)
         assertEquals(3, dao.getTotalAmount())
     }
 
-    @Test fun subtract() {
+    @Test fun subtract() = runBlocking {
         val listener = mock(QuestStatisticsDao.Listener::class.java)
         dao.addListener(listener)
         dao.addOne(ONE)
@@ -53,7 +54,7 @@ class QuestStatisticsDaoTest : ApplicationDbTestCase() {
         assertEquals(0, dao.getAmount(ONE))
     }
 
-    @Test fun getAmountOfSeveral() {
+    @Test fun getAmountOfSeveral() = runBlocking {
         dao.addOne(ONE)
         dao.addOne(ONE)
         dao.addOne(TWO)
@@ -61,7 +62,7 @@ class QuestStatisticsDaoTest : ApplicationDbTestCase() {
         assertEquals(3, dao.getAmount(listOf(ONE, TWO)))
     }
 
-    @Test fun replaceAll() {
+    @Test fun replaceAll() = runBlocking {
         dao.addOne(ONE)
         dao.addOne(TWO)
         val listener = mock(QuestStatisticsDao.Listener::class.java)
@@ -76,14 +77,14 @@ class QuestStatisticsDaoTest : ApplicationDbTestCase() {
         assertEquals(1, dao.getAmount(THREE))
     }
 
-    @Test fun getAll() {
+    @Test fun getAll() = runBlocking {
         dao.addOne(ONE)
         dao.addOne(ONE)
         dao.addOne(TWO)
         assertEquals(mapOf(
             ONE to 2,
             TWO to 1
-        ),dao.getAll())
+        ), dao.getAll())
     }
 }
 

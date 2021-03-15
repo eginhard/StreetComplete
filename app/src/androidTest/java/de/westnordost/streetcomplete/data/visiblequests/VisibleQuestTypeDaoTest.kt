@@ -4,6 +4,7 @@ import org.junit.Before
 import org.junit.Test
 
 import de.westnordost.streetcomplete.data.ApplicationDbTestCase
+import kotlinx.coroutines.runBlocking
 
 import org.junit.Assert.*
 
@@ -11,25 +12,25 @@ class VisibleQuestTypeDaoTest : ApplicationDbTestCase() {
     private lateinit var dao: VisibleQuestTypeDao
 
     @Before fun createDao() {
-        dao = VisibleQuestTypeDao(dbHelper)
+        dao = VisibleQuestTypeDao(database)
     }
 
-    @Test fun defaultEnabledQuest() {
+    @Test fun defaultEnabledQuest() = runBlocking {
         assertTrue(dao.get("something"))
     }
 
-    @Test fun disableQuest() {
+    @Test fun disableQuest() = runBlocking {
         dao.put("no", false)
         assertFalse(dao.get("no"))
     }
 
-    @Test fun enableQuest() {
+    @Test fun enableQuest() = runBlocking {
         dao.put("no", false)
         dao.put("no", true)
         assertTrue(dao.get("no"))
     }
 
-    @Test fun reset() {
+    @Test fun reset() = runBlocking {
         dao.put("blurb", false)
         assertFalse(dao.get("blurb"))
         dao.clear()

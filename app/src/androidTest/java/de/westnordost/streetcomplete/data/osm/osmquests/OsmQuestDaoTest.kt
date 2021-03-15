@@ -6,6 +6,7 @@ import de.westnordost.osmapi.map.data.LatLon
 import de.westnordost.osmapi.map.data.OsmLatLon
 import de.westnordost.streetcomplete.data.ApplicationDbTestCase
 import de.westnordost.streetcomplete.ktx.containsExactlyInAnyOrder
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
@@ -14,10 +15,10 @@ class OsmQuestDaoTest : ApplicationDbTestCase() {
     private lateinit var dao: OsmQuestDao
 
     @Before fun createDao() {
-        dao = OsmQuestDao(dbHelper)
+        dao = OsmQuestDao(database)
     }
 
-    @Test fun addGet() {
+    @Test fun addGet() = runBlocking {
         assertNull(dao.get(1L))
         val q = entry()
         dao.add(q)
@@ -25,7 +26,7 @@ class OsmQuestDaoTest : ApplicationDbTestCase() {
         assertEquals(q, dao.get(q.id!!))
     }
 
-    @Test fun delete() {
+    @Test fun delete() = runBlocking {
         val q = entry()
         dao.add(q)
         assertFalse(dao.delete(123))
@@ -34,7 +35,7 @@ class OsmQuestDaoTest : ApplicationDbTestCase() {
         assertNull(dao.get(q.id!!))
     }
 
-    @Test fun deleteAll() {
+    @Test fun deleteAll() = runBlocking {
         val q1 = entry("a")
         val q2 = entry("b")
         val q3 = entry("c")
@@ -46,7 +47,7 @@ class OsmQuestDaoTest : ApplicationDbTestCase() {
         assertEquals(q3, dao.get(q3.id!!))
     }
 
-    @Test fun getAllForElement() {
+    @Test fun getAllForElement() = runBlocking {
         val q1 = entry("a", Element.Type.NODE, 0)
         val q2 = entry("b", Element.Type.NODE, 0)
 
@@ -58,7 +59,7 @@ class OsmQuestDaoTest : ApplicationDbTestCase() {
         assertTrue(dao.getAllForElement(Element.Type.NODE, 0L).containsExactlyInAnyOrder(listOf(q1,q2)))
     }
 
-    @Test fun getAllInBBox() {
+    @Test fun getAllInBBox() = runBlocking {
         // in
         val q1 = entry("a", Element.Type.NODE, 0L, p(0.0,0.0))
         val q2 = entry("a", Element.Type.NODE, 1L, p(1.0,1.0))
@@ -81,7 +82,7 @@ class OsmQuestDaoTest : ApplicationDbTestCase() {
         ).containsExactlyInAnyOrder(listOf(q1,q2,q3)))
     }
 
-    @Test fun getAllInBBoxCount() {
+    @Test fun getAllInBBoxCount() = runBlocking {
         // in
         val q1 = entry("a", Element.Type.NODE, 0L, p(0.0,0.0))
         val q2 = entry("a", Element.Type.NODE, 1L, p(1.0,1.0))

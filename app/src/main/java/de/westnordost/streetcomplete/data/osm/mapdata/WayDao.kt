@@ -1,8 +1,7 @@
 package de.westnordost.streetcomplete.data.osm.mapdata
 
-import android.database.sqlite.SQLiteOpenHelper
-import androidx.core.content.contentValuesOf
 import de.westnordost.osmapi.map.data.*
+import de.westnordost.streetcomplete.data.Database
 
 import javax.inject.Inject
 
@@ -20,55 +19,62 @@ import java.lang.System.currentTimeMillis
 
 /** Stores OSM ways */
 class WayDao @Inject constructor(
-    private val dbHelper: SQLiteOpenHelper,
+    private val db: Database,
     private val serializer: Serializer
 ) {
-    private val db get() = dbHelper.writableDatabase
-
-    fun put(way: Way) {
+    suspend fun put(way: Way) {
         putAll(listOf(way))
     }
 
-    fun get(id: Long): Way? =
+    suspend fun get(id: Long): Way? =
         getAll(listOf(id)).firstOrNull()
 
-    fun delete(id: Long): Boolean =
+    suspend fun delete(id: Long): Boolean =
         deleteAll(listOf(id)) > 0
 
-    fun putAll(ways: Collection<Way>) {
+    suspend fun putAll(ways: Collection<Way>) {
         if (ways.isEmpty()) return
         val idsString = ways.joinToString(",") { it.id.toString() }
+
+        val time = currentTimeMillis()
+
         db.transaction {
-            db.delete(NAME_NODES, "$ID IN ($idsString)", null)
-            for (way in ways) {
-                way.nodeIds.forEachIndexed { index, nodeId ->
-                    db.insertOrThrow(NAME_NODES, null, contentValuesOf(
-                        ID to way.id,
-                        NODE_ID to nodeId,
-                        INDEX to index
-                    ))
+            db.delete(NAME_NODES, "$ID IN ($idsString)")
+
+            db.insertMany(NAME_NODES,
+                arrayOf(ID, NODE_ID, INDEX),
+                ways.flatMap { way ->
+                    way.nodeIds.mapIndexed { index, nodeId ->
+                        arrayOf(way.id, nodeId, index)
+                    }
                 }
-                db.replaceOrThrow(NAME, null, contentValuesOf(
-                    ID to way.id,
-                    VERSION to way.version,
-                    TAGS to way.tags?.let { serializer.toBytes(HashMap<String,String>(it)) },
-                    LAST_UPDATE to currentTimeMillis()
-                ))
-            }
+            )
+
+            db.replaceMany(NAME,
+                arrayOf(ID, VERSION, TAGS, LAST_UPDATE),
+                ways.map { way ->
+                    arrayOf(
+                        way.id,
+                        way.version,
+                        way.tags?.let { serializer.toBytes(HashMap<String,String>(it)) },
+                        time
+                    )
+                }
+            )
         }
     }
 
-    fun getAll(ids: Collection<Long>): List<Way> {
+    suspend fun getAll(ids: Collection<Long>): List<Way> {
         if (ids.isEmpty()) return emptyList()
         val idsString = ids.joinToString(",")
 
         val nodeIdsByWayId = mutableMapOf<Long, MutableList<Long>>()
-        db.query(NAME_NODES, selection = "$ID IN ($idsString)", orderBy = "$ID, $INDEX") { c ->
+        db.query(NAME_NODES, where = "$ID IN ($idsString)", orderBy = "$ID, $INDEX") { c ->
             val nodeIds = nodeIdsByWayId.getOrPut(c.getLong(ID)) { ArrayList() }
             nodeIds.add(c.getLong(NODE_ID))
         }
 
-        return db.query(NAME, selection = "$ID IN ($idsString)") { c ->
+        return db.query(NAME, where = "$ID IN ($idsString)") { c ->
             val id = c.getLong(ID)
             OsmWay(
                 id,
@@ -79,24 +85,24 @@ class WayDao @Inject constructor(
         }
     }
 
-    fun deleteAll(ids: Collection<Long>): Int {
+    suspend fun deleteAll(ids: Collection<Long>): Int {
         if (ids.isEmpty()) return 0
         val idsString = ids.joinToString(",")
         return db.transaction {
-            db.delete(NAME_NODES, "$ID IN ($idsString)", null)
-            db.delete(NAME, "$ID IN ($idsString)", null)
+            db.delete(NAME_NODES, "$ID IN ($idsString)")
+            db.delete(NAME, "$ID IN ($idsString)")
         }
     }
 
-    fun getAllForNode(nodeId: Long): List<Way> {
+    suspend fun getAllForNode(nodeId: Long): List<Way> {
         val ids = db.query(
             NAME_NODES,
             columns = arrayOf(ID),
-            selection = "$NODE_ID = $nodeId"
-        ) { it.getLong(0) }.toSet()
+            where = "$NODE_ID = $nodeId"
+        ) { it.getLong(ID) }.toSet()
         return getAll(ids)
     }
 
-    fun getIdsOlderThan(timestamp: Long): List<Long> =
-        db.query(NAME, columns = arrayOf(ID), selection = "$LAST_UPDATE < $timestamp") { it.getLong(0) }
+    suspend fun getIdsOlderThan(timestamp: Long): List<Long> =
+        db.query(NAME, columns = arrayOf(ID), where = "$LAST_UPDATE < $timestamp") { it.getLong(ID) }
 }

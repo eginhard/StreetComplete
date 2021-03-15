@@ -1,6 +1,7 @@
 package de.westnordost.streetcomplete.data.osm.edits
 
 import de.westnordost.streetcomplete.data.ApplicationDbTestCase
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
@@ -9,10 +10,10 @@ class ElementIdProviderDaoTest : ApplicationDbTestCase() {
     private lateinit var dao: ElementIdProviderDao
 
     @Before fun createDao() {
-        dao = ElementIdProviderDao(dbHelper)
+        dao = ElementIdProviderDao(database)
     }
 
-    @Test fun assign_get() {
+    @Test fun assign_get() = runBlocking {
         assertTrue(dao.get(1L).isEmpty())
 
         val nodeIdSet = mutableSetOf<Long>()
@@ -20,7 +21,7 @@ class ElementIdProviderDaoTest : ApplicationDbTestCase() {
         val relationIdSet = mutableSetOf<Long>()
 
         dao.assign(1L, 2, 3, 0)
-        val p1 = dao.get(1L)!!
+        val p1 = dao.get(1L)
 
         nodeIdSet.add(p1.nextNodeId())
         nodeIdSet.add(p1.nextNodeId())
@@ -34,7 +35,7 @@ class ElementIdProviderDaoTest : ApplicationDbTestCase() {
         assertThrows { p1.nextRelationId() }
 
         dao.assign(2L, 1, 1, 2)
-        val p2 = dao.get(2L)!!
+        val p2 = dao.get(2L)
 
         nodeIdSet.add(p2.nextNodeId())
         assertThrows { p2.nextNodeId() }
@@ -52,7 +53,7 @@ class ElementIdProviderDaoTest : ApplicationDbTestCase() {
         assertEquals(2, relationIdSet.size)
     }
 
-    @Test fun startsWithMinus1() {
+    @Test fun startsWithMinus1() = runBlocking {
         dao.assign(1L, 2, 2, 2)
         val p = dao.get(1L)
         assertEquals(-1, p.nextNodeId())
@@ -63,7 +64,7 @@ class ElementIdProviderDaoTest : ApplicationDbTestCase() {
         assertEquals(-6, p.nextRelationId())
     }
 
-    @Test fun delete() {
+    @Test fun delete() = runBlocking {
         assertEquals(0, dao.delete(1L))
         dao.assign(1L, 1,1,1)
         assertEquals(3, dao.delete(1L))

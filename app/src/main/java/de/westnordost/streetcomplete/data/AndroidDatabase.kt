@@ -5,10 +5,9 @@ import android.content.ContentValues
 import android.database.Cursor
 import android.database.sqlite.SQLiteDatabase.*
 import android.database.sqlite.SQLiteOpenHelper
+import android.database.sqlite.SQLiteStatement
 import de.westnordost.streetcomplete.data.ConflictAlgorithm.*
 import de.westnordost.streetcomplete.ktx.*
-import de.westnordost.streetcomplete.ktx.getShortOrNull
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -17,8 +16,31 @@ import javax.inject.Inject
 class AndroidDatabase @Inject constructor(private val dbHelper: SQLiteOpenHelper) : Database {
     private val db get() = dbHelper.writableDatabase
 
-    override suspend fun exec(sql: String, args: Array<Any>?) = io {
+    override suspend fun exec(sql: String, args: Array<Any>?) = execute {
         if (args == null) db.execSQL(sql) else db.execSQL(sql, args)
+    }
+
+    override suspend fun <T> rawQuery(
+        sql: String,
+        args: Array<Any>?,
+        transform: (CursorPosition) -> T
+    ): List<T> = execute {
+        val strArgs = args?.primitivesArrayToStringArray()
+        db.rawQuery(sql, strArgs).toSequence(transform).toList()
+    }
+
+    override suspend fun <T> queryOne(
+        table: String,
+        columns: Array<String>?,
+        where: String?,
+        args: Array<Any>?,
+        groupBy: String?,
+        having: String?,
+        orderBy: String?,
+        transform: (CursorPosition) -> T
+    ): T? = execute {
+        val strArgs = args?.primitivesArrayToStringArray()
+        db.query(false, table, columns, where, strArgs, groupBy, having, orderBy, "1").toSequence(transform).firstOrNull()
     }
 
     override suspend fun <T> query(
@@ -30,23 +52,48 @@ class AndroidDatabase @Inject constructor(private val dbHelper: SQLiteOpenHelper
         having: String?,
         orderBy: String?,
         limit: String?,
+        distinct: Boolean,
         transform: (CursorPosition) -> T
-    ): Sequence<T> = io {
+    ): List<T> = execute {
         val strArgs = args?.primitivesArrayToStringArray()
-        db.query(table, columns, where, strArgs, groupBy, having, orderBy, limit).toSequence(transform)
+        db.query(false, table, columns, where, strArgs, groupBy, having, orderBy, limit).toSequence(transform).toList()
     }
 
     override suspend fun insert(
         table: String,
         values: Collection<Pair<String, Any?>>,
         conflictAlgorithm: ConflictAlgorithm?
-    ): Long = io {
+    ): Long = execute {
         db.insertWithOnConflict(
             table,
             null,
             values.toContentValues(),
-            conflictAlgorithm.toAndroidConflictAlgorithm()
+            conflictAlgorithm.toConstant()
         )
+    }
+
+    override suspend fun insertMany(
+        table: String,
+        columnNames: Array<String>,
+        valuesList: Iterable<Array<Any?>>,
+        conflictAlgorithm: ConflictAlgorithm?
+    ) {
+        val conflictStr = conflictAlgorithm.toSQL()
+        val columnNamesStr = columnNames.joinToString(",")
+        val placeholdersStr = Array(columnNames.size) { "?" }.joinToString(",")
+        val stmt = db.compileStatement("INSERT $conflictStr INTO $table ($columnNamesStr) VALUES ($placeholdersStr)")
+
+        transaction {
+            for (values in valuesList) {
+                require(values.size == columnNames.size)
+                for ((i, value) in values.withIndex()) {
+                    stmt.bind(i, value)
+                }
+                stmt.executeInsert()
+                stmt.clearBindings()
+            }
+            stmt.close()
+        }
     }
 
     override suspend fun update(
@@ -55,26 +102,26 @@ class AndroidDatabase @Inject constructor(private val dbHelper: SQLiteOpenHelper
         where: String?,
         args: Array<Any>?,
         conflictAlgorithm: ConflictAlgorithm?
-    ): Int = io {
+    ): Int = execute {
         db.updateWithOnConflict(
             table,
             values.toContentValues(),
             where,
             args?.primitivesArrayToStringArray(),
-            conflictAlgorithm.toAndroidConflictAlgorithm()
+            conflictAlgorithm.toConstant()
         )
     }
 
 
-    override suspend fun delete(table: String, where: String?, args: Array<Any>?): Int = io {
+    override suspend fun delete(table: String, where: String?, args: Array<Any>?): Int = execute {
         val strArgs = args?.primitivesArrayToStringArray()
         db.delete(table, where, strArgs)
     }
 
-    override suspend fun <T> transaction(body: suspend () -> T): T = io {
+    override suspend fun <T> transaction(block: suspend () -> T): T = withContext(Dispatchers.IO) {
         db.beginTransaction()
         try {
-            val result = body()
+            val result = block()
             db.setTransactionSuccessful()
             result
         } finally {
@@ -82,18 +129,23 @@ class AndroidDatabase @Inject constructor(private val dbHelper: SQLiteOpenHelper
         }
     }
 
-    private fun Array<Any>.primitivesArrayToStringArray() = Array(size) { i ->
-        primitiveToString(this[i])
+    private suspend fun <T> execute(block: () -> T): T {
+        // if we are already in a transaction, let's not create a new scope for every statement therein
+        if (db.isOpen && db.inTransaction()) {
+            block()
+        }
+        return withContext(Dispatchers.IO) { block() }
     }
+}
 
-    private fun primitiveToString(any: Any): String = when(any) {
-        is Short, Int, Long, Float, Double -> any.toString()
-        is String -> any
-        else -> throw IllegalArgumentException("Cannot bind $any: Must be either Int, Long, Float, Double or String")
-    }
+private fun Array<Any>.primitivesArrayToStringArray() = Array(size) { i ->
+    primitiveToString(this[i])
+}
 
-    private suspend fun <T> io(block: suspend CoroutineScope.() -> T): T =
-        withContext(Dispatchers.IO, block)
+private fun primitiveToString(any: Any): String = when (any) {
+    is Short, Int, Long, Float, Double -> any.toString()
+    is String -> any
+    else -> throw IllegalArgumentException("Cannot bind $any: Must be either Int, Long, Float, Double or String")
 }
 
 private inline fun <T> Cursor.toSequence(crossinline transform: (CursorPosition) -> T): Sequence<T> = use { cursor ->
@@ -143,11 +195,37 @@ private fun Collection<Pair<String, Any?>>.toContentValues() = ContentValues(siz
     }
 }
 
-private fun ConflictAlgorithm?.toAndroidConflictAlgorithm() = when(this) {
+private fun ConflictAlgorithm?.toConstant() = when(this) {
     ROLLBACK -> CONFLICT_ROLLBACK
     ABORT -> CONFLICT_ABORT
     FAIL -> CONFLICT_FAIL
     IGNORE -> CONFLICT_IGNORE
     REPLACE -> CONFLICT_REPLACE
     null -> CONFLICT_NONE
+}
+
+private fun ConflictAlgorithm?.toSQL() = when(this) {
+    ROLLBACK -> " OR ROLLBACK "
+    ABORT -> " OR ABORT "
+    FAIL -> " OR FAIL "
+    IGNORE -> " OR IGNORE "
+    REPLACE -> " OR REPLACE "
+    null -> ""
+}
+
+private fun SQLiteStatement.bind(i: Int, value: Any?) {
+    when(value) {
+        null -> bindNull(i)
+        is String -> bindString(i, value)
+        is Double -> bindDouble(i, value)
+        is Long -> bindLong(i, value)
+        is ByteArray -> bindBlob(i, value)
+        is Int -> bindLong(i, value.toLong())
+        is Short -> bindLong(i, value.toLong())
+        is Float -> bindDouble(i, value.toDouble())
+        else -> {
+            val valueType = value.javaClass.canonicalName
+            throw IllegalArgumentException("Illegal value type $valueType at column $i")
+        }
+    }
 }

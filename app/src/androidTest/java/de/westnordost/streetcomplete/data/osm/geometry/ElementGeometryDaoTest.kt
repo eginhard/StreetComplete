@@ -9,6 +9,7 @@ import java.util.ArrayList
 import de.westnordost.streetcomplete.data.ApplicationDbTestCase
 import de.westnordost.streetcomplete.data.osm.mapdata.*
 import de.westnordost.streetcomplete.ktx.containsExactlyInAnyOrder
+import kotlinx.coroutines.runBlocking
 
 import org.junit.Assert.*
 
@@ -16,20 +17,20 @@ class ElementGeometryDaoTest : ApplicationDbTestCase() {
     private lateinit var dao: ElementGeometryDao
 
     @Before fun createDao() {
-        dao = ElementGeometryDao(dbHelper, serializer)
+        dao = ElementGeometryDao(database, serializer)
     }
 
-    @Test fun testGetNull() {
+    @Test fun testGetNull() = runBlocking {
         assertNull(dao.get(Element.Type.NODE, 0))
     }
 
-    @Test fun getNullDifferentPKey() {
+    @Test fun getNullDifferentPKey() = runBlocking {
         dao.put(ElementGeometryEntry(Element.Type.NODE, 0, createSimpleGeometry()))
         assertNull(dao.get(Element.Type.WAY, 0))
         assertNull(dao.get(Element.Type.NODE, 1))
     }
 
-    @Test fun putAll() {
+    @Test fun putAll() = runBlocking {
         val geometry = createSimpleGeometry()
         dao.putAll(listOf(
             ElementGeometryEntry(Element.Type.NODE, 1, geometry),
@@ -40,7 +41,7 @@ class ElementGeometryDaoTest : ApplicationDbTestCase() {
         assertNotNull(dao.get(Element.Type.NODE, 1))
     }
 
-    @Test fun getAllKeys() {
+    @Test fun getAllKeys() = runBlocking {
         dao.putAll(listOf(
             ElementGeometryEntry(Element.Type.NODE, 1, createPoint(0.0,0.0)),
             ElementGeometryEntry(Element.Type.WAY, 2, createPoint(1.0,2.0)),
@@ -60,7 +61,7 @@ class ElementGeometryDaoTest : ApplicationDbTestCase() {
         )))
     }
 
-    @Test fun getAllEntriesFoxBBox() {
+    @Test fun getAllEntriesFoxBBox() = runBlocking {
         val insideElements = listOf(
             ElementGeometryEntry(Element.Type.NODE, 1, createPoint(0.0,0.0)),
             ElementGeometryEntry(Element.Type.WAY, 2, createPoint(1.0,2.0)),
@@ -78,7 +79,7 @@ class ElementGeometryDaoTest : ApplicationDbTestCase() {
             .containsExactlyInAnyOrder(insideElements))
     }
 
-    @Test fun getAllEntriesForElementKeys() {
+    @Test fun getAllEntriesForElementKeys() = runBlocking {
         val entries = listOf(
             ElementGeometryEntry(Element.Type.NODE, 1, createSimpleGeometry()),
             ElementGeometryEntry(Element.Type.NODE, 2, createSimpleGeometry()),
@@ -103,7 +104,7 @@ class ElementGeometryDaoTest : ApplicationDbTestCase() {
             .containsExactlyInAnyOrder(expectedEntries))
     }
 
-    @Test fun simplePutGet() {
+    @Test fun simplePutGet() = runBlocking {
         val geometry = createSimpleGeometry()
         dao.put(ElementGeometryEntry(Element.Type.NODE, 0, geometry))
         val dbGeometry = dao.get(Element.Type.NODE, 0)
@@ -111,7 +112,7 @@ class ElementGeometryDaoTest : ApplicationDbTestCase() {
         assertEquals(geometry, dbGeometry)
     }
 
-    @Test fun polylineGeometryPutGet() {
+    @Test fun polylineGeometryPutGet() = runBlocking {
         val polylines = arrayListOf(createSomeLatLons(0.0))
         val geometry = ElementPolylinesGeometry(polylines, OsmLatLon(1.0, 2.0))
         dao.put(ElementGeometryEntry(Element.Type.WAY, 0, geometry))
@@ -120,7 +121,7 @@ class ElementGeometryDaoTest : ApplicationDbTestCase() {
         assertEquals(geometry, dbGeometry)
     }
 
-    @Test fun polygonGeometryPutGet() {
+    @Test fun polygonGeometryPutGet() = runBlocking {
         val polygons = arrayListOf(createSomeLatLons(0.0), createSomeLatLons(10.0))
         val geometry = ElementPolygonsGeometry(polygons, OsmLatLon(1.0, 2.0))
         dao.put(ElementGeometryEntry(Element.Type.RELATION, 0, geometry))
@@ -129,7 +130,7 @@ class ElementGeometryDaoTest : ApplicationDbTestCase() {
         assertEquals(geometry, dbGeometry)
     }
 
-    @Test fun delete() {
+    @Test fun delete() = runBlocking {
         dao.put(ElementGeometryEntry(Element.Type.NODE, 0, createSimpleGeometry()))
         assertTrue(dao.delete(Element.Type.NODE, 0))
 

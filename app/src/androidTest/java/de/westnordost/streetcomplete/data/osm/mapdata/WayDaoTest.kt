@@ -7,6 +7,7 @@ import de.westnordost.streetcomplete.data.ApplicationDbTestCase
 import de.westnordost.osmapi.map.data.OsmWay
 import de.westnordost.osmapi.map.data.Way
 import de.westnordost.streetcomplete.ktx.containsExactlyInAnyOrder
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.*
 
 
@@ -14,10 +15,10 @@ class WayDaoTest : ApplicationDbTestCase() {
     private lateinit var dao: WayDao
 
     @Before fun createDao() {
-        dao = WayDao(dbHelper, serializer)
+        dao = WayDao(database, serializer)
     }
 
-    @Test fun putGetNoTags() {
+    @Test fun putGetNoTags() = runBlocking {
         val way = way(5, 1, listOf(1L, 2L, 3L, 4L), null)
         dao.put(way)
         val dbWay = dao.get(5)
@@ -25,7 +26,7 @@ class WayDaoTest : ApplicationDbTestCase() {
         checkEqual(way, dbWay!!)
     }
 
-    @Test fun putGetWithTags() {
+    @Test fun putGetWithTags() = runBlocking {
         val way = way(5, 1, listOf(1L, 2L, 3L, 4L), mapOf("a key" to "a value"))
         dao.put(way)
         val dbWay = dao.get(5)
@@ -33,23 +34,23 @@ class WayDaoTest : ApplicationDbTestCase() {
         checkEqual(way, dbWay!!)
     }
 
-    @Test fun putOverwrites() {
+    @Test fun putOverwrites() = runBlocking {
         dao.put(way(6, 0))
         dao.put(way(6, 5))
         assertEquals(5, dao.get(6)!!.version)
     }
 
-    @Test fun putOverwritesAlsoNodeIds() {
+    @Test fun putOverwritesAlsoNodeIds() = runBlocking {
         dao.put(way(0, nodeIds = listOf(1,2,3)))
         dao.put(way(0, nodeIds = listOf(5,3,1,132)))
         assertEquals(listOf<Long>(5,3,1,132), dao.get(0)!!.nodeIds.toList())
     }
 
-    @Test fun getNull() {
+    @Test fun getNull() = runBlocking {
         assertNull(dao.get(6))
     }
 
-    @Test fun delete() {
+    @Test fun delete() = runBlocking {
         assertFalse(dao.delete(6))
         dao.put(way(6))
         assertTrue(dao.delete(6))
@@ -57,13 +58,13 @@ class WayDaoTest : ApplicationDbTestCase() {
         assertFalse(dao.delete(6))
     }
 
-    @Test fun putAll() {
+    @Test fun putAll() = runBlocking {
         dao.putAll(listOf(way(1), way(2)))
         assertNotNull(dao.get(1))
         assertNotNull(dao.get(2))
     }
 
-    @Test fun getAll() {
+    @Test fun getAll() = runBlocking {
         val e1 = way(1, nodeIds = listOf(1,2,3,12))
         val e2 = way(2, nodeIds = listOf(5,1233,564))
         val e3 = way(3, nodeIds = listOf(8,1654))
@@ -78,7 +79,7 @@ class WayDaoTest : ApplicationDbTestCase() {
         )
     }
 
-    @Test fun deleteAll() {
+    @Test fun deleteAll() = runBlocking {
         dao.putAll(listOf(way(1), way(2), way(3)))
         assertEquals(2, dao.deleteAll(listOf(1,2,4)))
         assertNotNull(dao.get(3))
@@ -86,7 +87,7 @@ class WayDaoTest : ApplicationDbTestCase() {
         assertNull(dao.get(2))
     }
 
-    @Test fun getAllForNode() {
+    @Test fun getAllForNode() = runBlocking {
         val e1 = way(1, nodeIds = listOf(1,2,3))
         val e2 = way(2, nodeIds = listOf(5,1233,1))
         val e3 = way(3, nodeIds = listOf(8,1654))
@@ -97,7 +98,7 @@ class WayDaoTest : ApplicationDbTestCase() {
         )
     }
 
-    @Test fun getUnusedAndOldIds() {
+    @Test fun getUnusedAndOldIds() = runBlocking {
         dao.putAll(listOf(way(1L), way(2L), way(3L)))
         val unusedIds = dao.getIdsOlderThan(System.currentTimeMillis() + 10)
         assertTrue(unusedIds.containsExactlyInAnyOrder(listOf(1L, 2L, 3L)))

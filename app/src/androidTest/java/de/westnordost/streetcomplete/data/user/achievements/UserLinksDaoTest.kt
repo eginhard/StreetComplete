@@ -1,6 +1,7 @@
 package de.westnordost.streetcomplete.data.user.achievements
 
 import de.westnordost.streetcomplete.data.ApplicationDbTestCase
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
@@ -9,19 +10,20 @@ class UserLinksDaoTest : ApplicationDbTestCase() {
     private lateinit var dao: UserLinksDao
 
     @Before fun createDao() {
-        dao = UserLinksDao(dbHelper)
+        dao = UserLinksDao(database)
     }
 
-    @Test fun putGetAll() {
+    @Test fun putGetAll() = runBlocking {
         dao.add(ONE)
         dao.add(ONE)
         dao.add(TWO)
         assertEquals(listOf(ONE, TWO), dao.getAll())
     }
 
-    @Test fun addAll() {
+    @Test fun addAll() = runBlocking {
         dao.add(ONE)
-        assertEquals(2, dao.addAll(listOf(ONE, TWO, THREE)))
+        dao.addAll(listOf(ONE, TWO, THREE))
+        assertEquals(listOf(ONE, TWO, THREE), dao.getAll())
     }
 }
 

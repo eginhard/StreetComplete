@@ -11,6 +11,7 @@ import de.westnordost.streetcomplete.util.CrashReportExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class StreetCompleteApplication : Application(),
@@ -53,7 +54,9 @@ class StreetCompleteApplication : Application(),
     }
 
     private fun onNewVersion() {
-        // on each new version, invalidate quest cache
-        downloadedTilesDao.removeAll()
+        applicationScope.launch {
+            // on each new version, invalidate quest cache
+            downloadedTilesDao.removeAll()
+        }
     }
 }

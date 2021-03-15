@@ -4,6 +4,7 @@ import org.junit.Before
 import org.junit.Test
 
 import de.westnordost.streetcomplete.data.ApplicationDbTestCase
+import kotlinx.coroutines.runBlocking
 
 import org.junit.Assert.*
 
@@ -15,24 +16,24 @@ class OpenChangesetsDaoTest : ApplicationDbTestCase() {
     private val SOURCE = "test"
 
     @Before fun createDao() {
-        dao = OpenChangesetsDao(dbHelper)
+        dao = OpenChangesetsDao(database)
     }
 
-    @Test fun deleteNonExistent() {
+    @Test fun deleteNonExistent() = runBlocking {
         assertFalse(dao.delete(Q, SOURCE))
     }
 
-    @Test fun createDelete() {
+    @Test fun createDelete() = runBlocking {
         dao.put(OpenChangeset(Q, SOURCE, 1))
         assertTrue(dao.delete(Q, SOURCE))
         assertNull(dao.get(Q, SOURCE))
     }
 
-    @Test fun getNull() {
+    @Test fun getNull() = runBlocking {
         assertNull(dao.get(Q, SOURCE))
     }
 
-    @Test fun insertChangesetId() {
+    @Test fun insertChangesetId() = runBlocking {
         dao.put(OpenChangeset(Q, SOURCE, 12))
         val info = dao.get(Q, SOURCE)!!
         assertEquals(12, info.changesetId)
@@ -40,17 +41,17 @@ class OpenChangesetsDaoTest : ApplicationDbTestCase() {
         assertEquals(SOURCE, info.source)
     }
 
-    @Test fun replaceChangesetId() {
+    @Test fun replaceChangesetId() = runBlocking {
         dao.put(OpenChangeset(Q, SOURCE, 12))
         dao.put(OpenChangeset(Q, SOURCE, 6497))
         assertEquals(6497, dao.get(Q, SOURCE)!!.changesetId)
     }
 
-    @Test fun getNone() {
+    @Test fun getNone() = runBlocking {
         assertTrue(dao.getAll().isEmpty())
     }
 
-    @Test fun insertTwo() {
+    @Test fun insertTwo() = runBlocking {
         dao.put(OpenChangeset(Q, SOURCE, 1))
         dao.put(OpenChangeset(P, SOURCE, 2))
         assertEquals(2, dao.getAll().size)

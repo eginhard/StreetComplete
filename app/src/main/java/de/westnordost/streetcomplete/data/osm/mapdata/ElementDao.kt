@@ -15,7 +15,7 @@ class ElementDao @Inject constructor(
     private val wayDao: WayDao,
     private val relationDao: RelationDao
 ) {
-    fun put(element: Element) {
+    suspend fun put(element: Element) {
         when (element) {
             is Node -> nodeDao.put(element)
             is Way -> wayDao.put(element)
@@ -23,7 +23,7 @@ class ElementDao @Inject constructor(
         }
     }
 
-    fun get(type: Element.Type, id: Long): Element? {
+    suspend fun get(type: Element.Type, id: Long): Element? {
         return when (type) {
             NODE -> nodeDao.get(id)
             WAY -> wayDao.get(id)
@@ -31,7 +31,7 @@ class ElementDao @Inject constructor(
         }
     }
 
-    fun delete(type: Element.Type, id: Long) {
+    suspend fun delete(type: Element.Type, id: Long) {
         when (type) {
             NODE -> nodeDao.delete(id)
             WAY -> wayDao.delete(id)
@@ -39,13 +39,13 @@ class ElementDao @Inject constructor(
         }
     }
 
-    fun putAll(elements: Iterable<Element>) {
+    suspend fun putAll(elements: Iterable<Element>) {
         nodeDao.putAll(elements.filterIsInstance<Node>())
         wayDao.putAll(elements.filterIsInstance<Way>())
         relationDao.putAll(elements.filterIsInstance<Relation>())
     }
 
-    fun getAll(keys: Iterable<ElementKey>): List<Element> {
+    suspend fun getAll(keys: Iterable<ElementKey>): List<Element> {
         val elementIds = keys.toElementIds()
         if (elementIds.size == 0) return emptyList()
 
@@ -56,7 +56,7 @@ class ElementDao @Inject constructor(
         return result
     }
 
-    fun deleteAll(keys: Iterable<ElementKey>): Int {
+    suspend fun deleteAll(keys: Iterable<ElementKey>): Int {
         val elementIds = keys.toElementIds()
         if (elementIds.size == 0) return 0
 
@@ -65,7 +65,7 @@ class ElementDao @Inject constructor(
             relationDao.deleteAll(elementIds.relations)
     }
 
-    fun getIdsOlderThan(timestamp: Long): List<ElementKey> {
+    suspend fun getIdsOlderThan(timestamp: Long): List<ElementKey> {
         val result = mutableListOf<ElementKey>()
         result.addAll(nodeDao.getIdsOlderThan(timestamp).map { ElementKey(NODE, it) })
         result.addAll(wayDao.getIdsOlderThan(timestamp).map { ElementKey(WAY, it) })

@@ -4,6 +4,23 @@ interface Database {
 
     suspend fun exec(sql: String, args: Array<Any>? = null)
 
+    suspend fun <T> rawQuery(
+        sql: String,
+        args: Array<Any>? = null,
+        transform: (CursorPosition) -> T
+    ): List<T>
+
+    suspend fun <T> queryOne(
+        table: String,
+        columns: Array<String>? = null,
+        where: String? = null,
+        args: Array<Any>? = null,
+        groupBy: String? = null,
+        having: String? = null,
+        orderBy: String? = null,
+        transform: (CursorPosition) -> T
+    ): T?
+
     suspend fun <T> query(
         table: String,
         columns: Array<String>? = null,
@@ -13,8 +30,9 @@ interface Database {
         having: String? = null,
         orderBy: String? = null,
         limit: String? = null,
+        distinct: Boolean = false,
         transform: (CursorPosition) -> T
-    ): Sequence<T>
+    ): List<T>
 
     suspend fun insert(
         table: String,
@@ -27,6 +45,19 @@ interface Database {
 
     suspend fun replace(table: String, values: Collection<Pair<String, Any?>>): Long =
         insert(table, values, ConflictAlgorithm.REPLACE)
+
+    suspend fun insertMany(
+        table: String,
+        columnNames: Array<String>,
+        valuesList: Iterable<Array<Any?>>,
+        conflictAlgorithm: ConflictAlgorithm? = null
+    )
+
+    suspend fun insertOrIgnoreMany(table: String, columnNames: Array<String>, valuesList: Iterable<Array<Any?>>) =
+        insertMany(table, columnNames, valuesList, ConflictAlgorithm.IGNORE)
+
+    suspend fun replaceMany(table: String, columnNames: Array<String>, valuesList: Iterable<Array<Any?>>) =
+        insertMany(table, columnNames, valuesList, ConflictAlgorithm.REPLACE)
 
     suspend fun update(
         table: String,
@@ -42,7 +73,7 @@ interface Database {
         args: Array<Any>? = null
     ): Int
 
-    suspend fun <T> transaction(body: suspend () -> T): T
+    suspend fun <T> transaction(block: suspend () -> T): T
 }
 
 enum class ConflictAlgorithm {

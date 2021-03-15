@@ -12,6 +12,7 @@ import de.westnordost.osmapi.map.data.OsmLatLon
 import de.westnordost.osmapi.notes.Note
 import de.westnordost.osmapi.notes.NoteComment
 import de.westnordost.osmapi.user.User
+import kotlinx.coroutines.runBlocking
 
 import org.junit.Assert.*
 
@@ -19,10 +20,10 @@ class NoteDaoTest : ApplicationDbTestCase() {
     private lateinit var dao: NoteDao
 
     @Before fun createDao() {
-        dao = NoteDao(dbHelper, serializer)
+        dao = NoteDao(database, serializer)
     }
 
-    @Test fun putGetNoClosedDate() {
+    @Test fun putGetNoClosedDate() = runBlocking {
         val note = createNote()
 
         dao.put(note)
@@ -30,13 +31,13 @@ class NoteDaoTest : ApplicationDbTestCase() {
         checkEqual(note, dbNote)
     }
 
-    @Test fun putAll() {
+    @Test fun putAll() = runBlocking {
         dao.putAll(listOf(createNote(1), createNote(2)))
         assertNotNull(dao.get(1))
         assertNotNull(dao.get(2))
     }
 
-    @Test fun putReplace() {
+    @Test fun putReplace() = runBlocking {
         val note = createNote()
         dao.put(note)
         note.status = Note.Status.CLOSED
@@ -46,7 +47,7 @@ class NoteDaoTest : ApplicationDbTestCase() {
         checkEqual(note, dbNote)
     }
 
-    @Test fun putGetWithClosedDate() {
+    @Test fun putGetWithClosedDate() = runBlocking {
         val note = createNote()
         note.dateClosed = Date(6000)
 
@@ -55,18 +56,18 @@ class NoteDaoTest : ApplicationDbTestCase() {
         checkEqual(note, dbNote)
     }
 
-    @Test fun deleteButNothingIsThere() {
+    @Test fun deleteButNothingIsThere() = runBlocking {
         assertFalse(dao.delete(1))
     }
 
-    @Test fun delete() {
+    @Test fun delete() = runBlocking {
         val note = createNote()
         dao.put(note)
         assertTrue(dao.delete(note.id))
         assertNull(dao.get(note.id))
     }
 
-    @Test fun getAllPositions() {
+    @Test fun getAllPositions() = runBlocking {
         val thisIsIn = createNote(1, OsmLatLon(0.5, 0.5))
         val thisIsOut = createNote(2, OsmLatLon(-0.5, 0.5))
         dao.putAll(listOf(thisIsIn, thisIsOut))
@@ -75,7 +76,7 @@ class NoteDaoTest : ApplicationDbTestCase() {
         assertEquals(OsmLatLon(0.5, 0.5), positions.single())
     }
 
-    @Test fun getAllByBbox() {
+    @Test fun getAllByBbox() = runBlocking {
         val thisIsIn = createNote(1, OsmLatLon(0.5, 0.5))
         val thisIsOut = createNote(2, OsmLatLon(-0.5, 0.5))
         dao.putAll(listOf(thisIsIn, thisIsOut))
@@ -84,7 +85,7 @@ class NoteDaoTest : ApplicationDbTestCase() {
         checkEqual(thisIsIn, notes.single())
     }
 
-    @Test fun getAllByIds() {
+    @Test fun getAllByIds() = runBlocking {
         val first = createNote(1)
         val second = createNote(2)
         val third = createNote(3)
@@ -96,7 +97,7 @@ class NoteDaoTest : ApplicationDbTestCase() {
         checkEqual(second, notes[1])
     }
 
-    @Test fun deleteAllByIds() {
+    @Test fun deleteAllByIds() = runBlocking {
         dao.putAll(listOf(createNote(1), createNote(2), createNote(3)))
 
         assertEquals(2, dao.deleteAll(listOf(1,2)))

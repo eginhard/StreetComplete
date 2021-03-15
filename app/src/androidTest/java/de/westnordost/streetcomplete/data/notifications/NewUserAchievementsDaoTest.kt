@@ -1,6 +1,7 @@
 package de.westnordost.streetcomplete.data.notifications
 
 import de.westnordost.streetcomplete.data.ApplicationDbTestCase
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
@@ -10,10 +11,10 @@ class NewUserAchievementsDaoTest : ApplicationDbTestCase() {
     private lateinit var dao: NewUserAchievementsDao
 
     @Before fun createDao() {
-        dao = NewUserAchievementsDao(dbHelper)
+        dao = NewUserAchievementsDao(database)
     }
 
-    @Test fun addPopFirst() {
+    @Test fun addPopFirst() = runBlocking {
         val listener: NewUserAchievementsDao.UpdateListener = mock(NewUserAchievementsDao.UpdateListener::class.java)
         dao.addListener(listener)
         dao.push(TWO to 2)
@@ -30,7 +31,7 @@ class NewUserAchievementsDaoTest : ApplicationDbTestCase() {
         verify(listener, times(8)).onNewUserAchievementsUpdated()
     }
 
-    @Test fun addPop() {
+    @Test fun addPop() = runBlocking {
         val listener: NewUserAchievementsDao.UpdateListener = mock(NewUserAchievementsDao.UpdateListener::class.java)
         dao.addListener(listener)
 

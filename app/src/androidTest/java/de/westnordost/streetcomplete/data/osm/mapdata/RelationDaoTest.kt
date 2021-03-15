@@ -6,16 +6,17 @@ import org.junit.Test
 
 import de.westnordost.streetcomplete.data.ApplicationDbTestCase
 import de.westnordost.streetcomplete.ktx.containsExactlyInAnyOrder
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.*
 
 class RelationDaoTest : ApplicationDbTestCase() {
     private lateinit var dao: RelationDao
 
     @Before fun createDao() {
-        dao = RelationDao(dbHelper, serializer)
+        dao = RelationDao(database, serializer)
     }
 
-    @Test fun putGetNoTags() {
+    @Test fun putGetNoTags() = runBlocking {
         val members = listOf(
             OsmRelationMember(0, "outer", Element.Type.WAY),
             OsmRelationMember(1, "inner", Element.Type.WAY)
@@ -27,7 +28,7 @@ class RelationDaoTest : ApplicationDbTestCase() {
         checkEqual(relation, dbRelation!!)
     }
 
-    @Test fun putGetWithTags() {
+    @Test fun putGetWithTags() = runBlocking {
         val members = listOf(
             OsmRelationMember(0, "outer", Element.Type.WAY),
             OsmRelationMember(1, "inner", Element.Type.WAY)
@@ -39,13 +40,13 @@ class RelationDaoTest : ApplicationDbTestCase() {
         checkEqual(relation, dbRelation!!)
     }
 
-    @Test fun putOverwrites() {
+    @Test fun putOverwrites() = runBlocking {
         dao.put(rel(6, 0))
         dao.put(rel(6, 5))
         assertEquals(5, dao.get(6)!!.version)
     }
 
-    @Test fun putOverwritesAlsoRelationMembers() {
+    @Test fun putOverwritesAlsoRelationMembers() = runBlocking {
         val members1 = listOf(
             OsmRelationMember(0, "outer", Element.Type.WAY),
             OsmRelationMember(1, "inner", Element.Type.WAY)
@@ -60,11 +61,11 @@ class RelationDaoTest : ApplicationDbTestCase() {
         assertEquals(members2, dao.get(0)!!.members)
     }
 
-    @Test fun getNull() {
+    @Test fun getNull() = runBlocking {
         assertNull(dao.get(6))
     }
 
-    @Test fun delete() {
+    @Test fun delete() = runBlocking {
         assertFalse(dao.delete(6))
         dao.put(rel(6))
         assertTrue(dao.delete(6))
@@ -72,13 +73,13 @@ class RelationDaoTest : ApplicationDbTestCase() {
         assertFalse(dao.delete(6))
     }
 
-    @Test fun putAll() {
+    @Test fun putAll() = runBlocking {
         dao.putAll(listOf(rel(1), rel(2)))
         assertNotNull(dao.get(1))
         assertNotNull(dao.get(2))
     }
 
-    @Test fun getAll() {
+    @Test fun getAll() = runBlocking {
         val e1 = rel(1, members = listOf(OsmRelationMember(0, "bla", Element.Type.NODE)))
         val e2 = rel(2, members = listOf(
             OsmRelationMember(0, "bla", Element.Type.NODE),
@@ -99,7 +100,7 @@ class RelationDaoTest : ApplicationDbTestCase() {
         )
     }
 
-    @Test fun deleteAll() {
+    @Test fun deleteAll() = runBlocking {
         dao.putAll(listOf(rel(1), rel(2), rel(3)))
         assertEquals(2, dao.deleteAll(listOf(1,2,4)))
         assertNotNull(dao.get(3))
@@ -107,7 +108,7 @@ class RelationDaoTest : ApplicationDbTestCase() {
         assertNull(dao.get(2))
     }
 
-    @Test fun getAllForElement() {
+    @Test fun getAllForElement() = runBlocking {
         val e1 = rel(1, members = listOf(OsmRelationMember(0, "bla", Element.Type.NODE)))
         val e2 = rel(2, members = listOf(
             OsmRelationMember(0, "bla", Element.Type.NODE),
@@ -132,7 +133,7 @@ class RelationDaoTest : ApplicationDbTestCase() {
         )
     }
 
-    @Test fun getUnusedAndOldIds() {
+    @Test fun getUnusedAndOldIds() = runBlocking {
         dao.putAll(listOf(rel(1L), rel(2L), rel(3L)))
         val unusedIds = dao.getIdsOlderThan(System.currentTimeMillis() + 10)
         assertTrue(unusedIds.containsExactlyInAnyOrder(listOf(1L, 2L, 3L)))

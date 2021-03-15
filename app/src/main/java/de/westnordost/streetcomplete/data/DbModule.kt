@@ -12,7 +12,10 @@ import javax.inject.Singleton
 @Module
 object DbModule {
     @Provides @Singleton fun sqLiteOpenHelper(ctx: Context): SQLiteOpenHelper =
-        StreetCompleteSQLiteOpenHelper(ctx, ApplicationConstants.DATABASE_NAME)
+        sqLiteOpenHelper(ctx, ApplicationConstants.DATABASE_NAME)
+
+    fun sqLiteOpenHelper(ctx: Context, databaseName: String): SQLiteOpenHelper =
+        StreetCompleteSQLiteOpenHelper(ctx, databaseName)
 
     @Provides @Singleton fun database(sqLiteOpenHelper: SQLiteOpenHelper): Database =
         AndroidDatabase(sqLiteOpenHelper)

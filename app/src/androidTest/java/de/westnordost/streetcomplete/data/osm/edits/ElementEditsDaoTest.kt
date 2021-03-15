@@ -13,6 +13,7 @@ import de.westnordost.streetcomplete.data.osm.osmquests.TestQuestType2
 import de.westnordost.streetcomplete.data.quest.QuestType
 import de.westnordost.streetcomplete.data.quest.QuestTypeRegistry
 import de.westnordost.streetcomplete.ktx.containsExactlyInAnyOrder
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
@@ -22,10 +23,10 @@ class ElementEditsDaoTest : ApplicationDbTestCase() {
 
     @Before fun createDao() {
         val list = listOf<QuestType<*>>(TEST_QUEST_TYPE, TEST_QUEST_TYPE2)
-        dao = ElementEditsDao(dbHelper, QuestTypeRegistry(list), serializer)
+        dao = ElementEditsDao(database, QuestTypeRegistry(list), serializer)
     }
 
-    @Test fun addGet_UpdateElementTagsEdit() {
+    @Test fun addGet_UpdateElementTagsEdit() = runBlocking {
         val edit = updateTags()
         dao.add(edit)
         assertNotNull(edit.id)
@@ -33,7 +34,7 @@ class ElementEditsDaoTest : ApplicationDbTestCase() {
         assertEquals(edit, dbEdit)
     }
 
-    @Test fun addGet_RevertUpdateElementTagsEdit() {
+    @Test fun addGet_RevertUpdateElementTagsEdit() = runBlocking  {
         val edit = revertUpdateTags()
         dao.add(edit)
         assertNotNull(edit.id)
@@ -41,7 +42,7 @@ class ElementEditsDaoTest : ApplicationDbTestCase() {
         assertEquals(edit, dbEdit)
     }
 
-    @Test fun addGet_DeletePoiNodeEdit() {
+    @Test fun addGet_DeletePoiNodeEdit() = runBlocking {
         val edit = deletePoi()
         dao.add(edit)
         assertNotNull(edit.id)
@@ -49,7 +50,7 @@ class ElementEditsDaoTest : ApplicationDbTestCase() {
         assertEquals(edit, dbEdit)
     }
 
-    @Test fun addGet_SplitWayEdit() {
+    @Test fun addGet_SplitWayEdit() = runBlocking {
         val edit = splitWay()
         dao.add(edit)
         assertNotNull(edit.id)
@@ -57,7 +58,7 @@ class ElementEditsDaoTest : ApplicationDbTestCase() {
         assertEquals(edit, dbEdit)
     }
 
-    @Test fun addGetDelete() {
+    @Test fun addGetDelete() = runBlocking {
         val edit = updateTags()
         // nothing there
         assertFalse(dao.delete(1L))
@@ -72,7 +73,7 @@ class ElementEditsDaoTest : ApplicationDbTestCase() {
         assertNull(dao.get(edit.id))
     }
 
-    @Test fun getAll() {
+    @Test fun getAll() = runBlocking {
         val e1 = updateTags(timestamp = 10)
         val e2 = deletePoi(timestamp = 100)
         val e3 = splitWay(timestamp = 1000)
@@ -83,7 +84,7 @@ class ElementEditsDaoTest : ApplicationDbTestCase() {
         assertEquals(listOf(e1, e2, e3), dao.getAll())
     }
 
-    @Test fun getAllUnsynced() {
+    @Test fun getAllUnsynced() = runBlocking {
         val e1 = updateTags(timestamp = 10)
         val e2 = deletePoi(timestamp = 100)
         val e3 = splitWay(timestamp = 1000)
@@ -95,7 +96,7 @@ class ElementEditsDaoTest : ApplicationDbTestCase() {
         assertEquals(listOf(e1, e2, e3), dao.getAllUnsynced())
     }
 
-    @Test fun markSynced() {
+    @Test fun markSynced() = runBlocking {
         val e = updateTags(isSynced = false)
         dao.add(e)
         val id = e.id
@@ -104,7 +105,7 @@ class ElementEditsDaoTest : ApplicationDbTestCase() {
         assertTrue(dao.get(id)!!.isSynced)
     }
 
-    @Test fun peekUnsynced() {
+    @Test fun peekUnsynced() = runBlocking {
         assertNull(dao.getOldestUnsynced())
 
         val e1 = updateTags(isSynced = true)
@@ -124,7 +125,7 @@ class ElementEditsDaoTest : ApplicationDbTestCase() {
         assertEquals(e4, dao.getOldestUnsynced())
     }
 
-    @Test fun getUnsyncedCount() {
+    @Test fun getUnsyncedCount() = runBlocking {
         assertEquals(0, dao.getUnsyncedCount())
 
         dao.add(updateTags(isSynced = true))
@@ -137,7 +138,7 @@ class ElementEditsDaoTest : ApplicationDbTestCase() {
         assertEquals(2, dao.getUnsyncedCount())
     }
 
-    @Test fun deleteSyncedOlderThan() {
+    @Test fun deleteSyncedOlderThan() = runBlocking {
         val oldEnough = updateTags(timestamp = 500, isSynced = true)
         val tooYoung = updateTags(timestamp = 1000, isSynced = true)
         val notSynced = updateTags(timestamp = 500, isSynced = false)
@@ -148,7 +149,7 @@ class ElementEditsDaoTest : ApplicationDbTestCase() {
         assertTrue(dao.getAll().containsExactlyInAnyOrder(listOf(tooYoung, notSynced)))
     }
 
-    @Test fun updateElementId() {
+    @Test fun updateElementId() = runBlocking {
         assertEquals(0, dao.updateElementId(Element.Type.NODE, -5, 6))
 
         val e1 = updateTags(elementType = Element.Type.NODE, elementId = -5)
@@ -167,7 +168,7 @@ class ElementEditsDaoTest : ApplicationDbTestCase() {
     }
 }
 
-private fun ElementEditsDao.addAll(vararg edits: ElementEdit) = edits.forEach { add(it) }
+private suspend fun ElementEditsDao.addAll(vararg edits: ElementEdit) = edits.forEach { add(it) }
 
 private fun updateTags(
     elementType: Element.Type = Element.Type.NODE,
