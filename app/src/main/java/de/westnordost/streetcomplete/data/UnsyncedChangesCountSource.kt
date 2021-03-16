@@ -21,73 +21,28 @@ import javax.inject.Singleton
     }
 
     private val listeners = CopyOnWriteArrayList<Listener>()
-    private val initialized = AtomicBoolean(false)
 
-    suspend fun getCount(): Int {
-        lazyInit()
-        return unsyncedNotesCount + unsyncedElementsCount
-    }
+    suspend fun getCount(): Int =
+        elementEditsSource.getUnsyncedCount() + noteEditsSource.getUnsyncedCount()
 
     /** count of unsynced changes that count towards the statistics. That is, unsynced note stuff
      *  doesn't count and reverts of changes count negative */
-    suspend fun getSolvedCount(): Int {
-        lazyInit()
-        return solvedCount
-    }
-
-    private var solvedCount: Int = 0
-
-    private var unsyncedNotesCount: Int = 0
-    set(value) {
-        val diff = value - field
-        field = value
-        onUpdate(diff)
-    }
-    private var unsyncedElementsCount: Int = 0
-    set(value) {
-        val diff = value - field
-        field = value
-        onUpdate(diff)
-    }
+    suspend fun getSolvedCount(): Int =
+        elementEditsSource.getPositiveUnsyncedCount()
 
     private val noteEditsListener = object : NoteEditsSource.Listener {
-        override fun onAddedEdit(edit: NoteEdit) {
-            if (edit.isSynced) return
-            ++unsyncedNotesCount
-        }
-
-        override fun onSyncedEdit(edit: NoteEdit) {
-            --unsyncedNotesCount
-        }
-
-        override fun onDeletedEdit(edit: NoteEdit) {
-            if (edit.isSynced) return
-            --unsyncedNotesCount
-        }
+        override fun onAddedEdit(edit: NoteEdit) { if (!edit.isSynced) onUpdate(+1) }
+        override fun onSyncedEdit(edit: NoteEdit) { onUpdate(-1) }
+        override fun onDeletedEdit(edit: NoteEdit) { if (!edit.isSynced) onUpdate(-1) }
     }
 
     private val elementEditsListener = object : ElementEditsSource.Listener {
-        override fun onAddedEdit(edit: ElementEdit) {
-            if (edit.isSynced) return
-            if (edit.action is IsRevertAction) --solvedCount else ++solvedCount
-            ++unsyncedElementsCount
-        }
-        override fun onSyncedEdit(edit: ElementEdit) {
-            if (edit.action is IsRevertAction) ++solvedCount else --solvedCount
-            --unsyncedElementsCount
-        }
-        override fun onDeletedEdit(edit: ElementEdit) {
-            if (edit.isSynced) return
-            if (edit.action is IsRevertAction) ++solvedCount else --solvedCount
-            --unsyncedElementsCount
-        }
+        override fun onAddedEdit(edit: ElementEdit) { if (!edit.isSynced) onUpdate(+1) }
+        override fun onSyncedEdit(edit: ElementEdit) { onUpdate(-1) }
+        override fun onDeletedEdit(edit: ElementEdit) { if (!edit.isSynced) onUpdate(-1) }
     }
 
-    private suspend fun lazyInit() {
-        if (!initialized.compareAndSet(false, true)) return
-        unsyncedNotesCount = noteEditsSource.getUnsyncedCount()
-        unsyncedElementsCount = elementEditsSource.getUnsyncedCount()
-        solvedCount = elementEditsSource.getPositiveUnsyncedCount()
+    init {
         elementEditsSource.addListener(elementEditsListener)
         noteEditsSource.addListener(noteEditsListener)
     }
