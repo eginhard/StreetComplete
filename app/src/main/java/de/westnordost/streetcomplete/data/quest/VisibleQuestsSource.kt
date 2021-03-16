@@ -64,11 +64,11 @@ import javax.inject.Singleton
     }
 
     /** Get count of all visible quests in given bounding box */
-    fun getCount(bbox: BoundingBox): Int =
+    suspend fun getCount(bbox: BoundingBox): Int =
         osmQuestSource.getAllInBBoxCount(bbox)
 
     /** Retrieve all visible quests in the given bounding box from local database */
-    fun getAllVisible(bbox: BoundingBox, questTypes: Collection<String>): List<QuestAndGroup> {
+    suspend fun getAllVisible(bbox: BoundingBox, questTypes: Collection<String>): List<QuestAndGroup> {
         if (questTypes.isEmpty()) return listOf()
         val osmQuests = osmQuestSource.getAllVisibleInBBox(bbox, questTypes)
         val osmNoteQuests = osmNoteQuestSource.getAllVisibleInBBox(bbox)
@@ -77,7 +77,7 @@ import javax.inject.Singleton
                osmNoteQuests.filter(::isVisible).map { QuestAndGroup(it, QuestGroup.OSM_NOTE) }
     }
 
-    fun get(questGroup: QuestGroup, questId: Long): Quest? = when (questGroup) {
+    suspend fun get(questGroup: QuestGroup, questId: Long): Quest? = when (questGroup) {
         QuestGroup.OSM -> osmQuestSource.get(questId)
         QuestGroup.OSM_NOTE -> osmNoteQuestSource.get(questId)
     }?.takeIf(::isVisible)

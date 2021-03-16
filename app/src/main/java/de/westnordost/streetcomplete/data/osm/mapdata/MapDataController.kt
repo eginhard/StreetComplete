@@ -89,7 +89,7 @@ import javax.inject.Singleton
         elementDB.putAll(elements)
     }
 
-    private fun completeMapData(mapData: MutableMapData) {
+    private suspend fun completeMapData(mapData: MutableMapData) {
         val missingNodeIds = mutableListOf<Long>()
         val missingWayIds = mutableListOf<Long>()
         for (relation in mapData.relations) {
@@ -116,14 +116,14 @@ import javax.inject.Singleton
         mapData.addAll(ways)
     }
 
-    fun get(type: Element.Type, id: Long) : Element? = elementDB.get(type, id)
+    suspend fun get(type: Element.Type, id: Long) : Element? = elementDB.get(type, id)
 
-    fun getGeometry(type: Element.Type, id: Long) : ElementGeometry? = geometryDB.get(type, id)
+    suspend fun getGeometry(type: Element.Type, id: Long) : ElementGeometry? = geometryDB.get(type, id)
 
-    fun getGeometries(keys: Collection<ElementKey>): List<ElementGeometryEntry> =
+    suspend fun getGeometries(keys: Collection<ElementKey>): List<ElementGeometryEntry> =
         geometryDB.getAllEntries(keys)
 
-    fun getMapDataWithGeometry(bbox: BoundingBox): MutableMapDataWithGeometry {
+    suspend fun getMapDataWithGeometry(bbox: BoundingBox): MutableMapDataWithGeometry {
         val time = currentTimeMillis()
         val elementGeometryEntries = geometryDB.getAllEntries(bbox)
         val elementKeys = elementGeometryEntries.map { ElementKey(it.elementType, it.elementId) }
@@ -134,20 +134,20 @@ import javax.inject.Singleton
         return result
     }
 
-    fun getNode(id: Long): Node? = nodeDB.get(id)
-    fun getWay(id: Long): Way? = wayDB.get(id)
-    fun getRelation(id: Long): Relation? = relationDB.get(id)
+    suspend fun getNode(id: Long): Node? = nodeDB.get(id)
+    suspend fun getWay(id: Long): Way? = wayDB.get(id)
+    suspend fun getRelation(id: Long): Relation? = relationDB.get(id)
 
-    fun getAll(elementKeys: Iterable<ElementKey>): List<Element> = elementDB.getAll(elementKeys)
+    suspend fun getAll(elementKeys: Iterable<ElementKey>): List<Element> = elementDB.getAll(elementKeys)
 
-    fun getNodes(ids: Collection<Long>): List<Node> = nodeDB.getAll(ids)
-    fun getWays(ids: Collection<Long>): List<Way> = wayDB.getAll(ids)
-    fun getRelations(ids: Collection<Long>): List<Relation> = relationDB.getAll(ids)
+    suspend fun getNodes(ids: Collection<Long>): List<Node> = nodeDB.getAll(ids)
+    suspend fun getWays(ids: Collection<Long>): List<Way> = wayDB.getAll(ids)
+    suspend fun getRelations(ids: Collection<Long>): List<Relation> = relationDB.getAll(ids)
 
-    fun getWaysForNode(id: Long): List<Way> = wayDB.getAllForNode(id)
-    fun getRelationsForNode(id: Long): List<Relation> = relationDB.getAllForNode(id)
-    fun getRelationsForWay(id: Long): List<Relation> = relationDB.getAllForWay(id)
-    fun getRelationsForRelation(id: Long): List<Relation> = relationDB.getAllForRelation(id)
+    suspend fun getWaysForNode(id: Long): List<Way> = wayDB.getAllForNode(id)
+    suspend fun getRelationsForNode(id: Long): List<Relation> = relationDB.getAllForNode(id)
+    suspend fun getRelationsForWay(id: Long): List<Relation> = relationDB.getAllForWay(id)
+    suspend fun getRelationsForRelation(id: Long): List<Relation> = relationDB.getAllForRelation(id)
 
     @Synchronized fun deleteOlderThan(timestamp: Long): Int {
         val elements = elementDB.getIdsOlderThan(timestamp)

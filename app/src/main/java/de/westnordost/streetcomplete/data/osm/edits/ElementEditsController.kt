@@ -51,13 +51,13 @@ import javax.inject.Singleton
         add(edit)
     }
 
-    fun getAllUnsynced(): List<ElementEdit> =
+    suspend fun getAllUnsynced(): List<ElementEdit> =
         editsDB.getAllUnsynced()
 
-    fun getOldestUnsynced(): ElementEdit? =
+    suspend fun getOldestUnsynced(): ElementEdit? =
         editsDB.getOldestUnsynced()
 
-    fun getIdProvider(id: Long): ElementIdProvider =
+    suspend fun getIdProvider(id: Long): ElementIdProvider =
         elementIdProviderDB.get(id)
 
     /** Delete old synced (aka uploaded) edits older than the given timestamp. Used to clear
@@ -65,10 +65,10 @@ import javax.inject.Singleton
     @Synchronized fun deleteSyncedOlderThan(timestamp: Long): Int =
         editsDB.deleteSyncedOlderThan(timestamp)
 
-    override fun getUnsyncedCount(): Int =
+    override suspend fun getUnsyncedCount(): Int =
         editsDB.getUnsyncedCount()
 
-    override fun getPositiveUnsyncedCount(): Int {
+    override suspend fun getPositiveUnsyncedCount(): Int {
         val unsynced = editsDB.getAllUnsynced().map { it.action }
         return unsynced.filter { it !is IsRevertAction }.size - unsynced.filter { it is IsRevertAction }.size
     }
@@ -90,7 +90,7 @@ import javax.inject.Singleton
 
     /* ----------------------- Undoable edits and undoing them -------------------------------- */
 
-    fun getMostRecentUndoableEdit(): ElementEdit? =
+    suspend fun getMostRecentUndoableEdit(): ElementEdit? =
         editsDB.getAll().firstOrNull { !it.isSynced || it.action is IsActionRevertable }
 
     /** Undo edit with the given id. If unsynced yet, will delete the edit if it is undoable. If

@@ -70,12 +70,12 @@ import javax.inject.Singleton
         notesPreferences.listener = notesPreferencesListener
     }
 
-    override fun get(questId: Long): OsmNoteQuest? {
+    override suspend fun get(questId: Long): OsmNoteQuest? {
         if (isNoteHidden(questId)) return null
         return noteSource.get(questId)?.let { createQuestForNote(it) }
     }
 
-    override fun getAllVisibleInBBox(bbox: BoundingBox): List<OsmNoteQuest> {
+    override suspend fun getAllVisibleInBBox(bbox: BoundingBox): List<OsmNoteQuest> {
         return createQuestsForNotes(noteSource.getAll(bbox))
     }
 
@@ -104,9 +104,9 @@ import javax.inject.Singleton
             OsmNoteQuest(note.id, note.position)
         else null
 
-    private fun isNoteHidden(noteId: Long): Boolean = hiddenDB.contains(noteId)
+    private suspend fun isNoteHidden(noteId: Long): Boolean = hiddenDB.contains(noteId)
 
-    private fun getNoteIdsHidden(): Set<Long> = hiddenDB.getAll().toSet()
+    private suspend fun getNoteIdsHidden(): Set<Long> = hiddenDB.getAll().toSet()
 
     /* ---------------------------------------- Listener ---------------------------------------- */
 

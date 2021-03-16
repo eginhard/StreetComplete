@@ -145,14 +145,14 @@ import javax.inject.Singleton
         elementEditsController.addListener(elementEditsListener)
     }
 
-    @Synchronized fun get(type: Element.Type, id: Long): Element? {
+    @Synchronized suspend fun get(type: Element.Type, id: Long): Element? {
         val key = ElementKey(type, id)
         if (deletedElements.contains(key)) return null
 
         return updatedElements[key] ?: mapDataController.get(type, id)
     }
 
-    @Synchronized fun getGeometry(type: Element.Type, id: Long): ElementGeometry? {
+    @Synchronized suspend fun getGeometry(type: Element.Type, id: Long): ElementGeometry? {
         val key = ElementKey(type, id)
         if (deletedElements.contains(key)) return null
 
@@ -163,7 +163,7 @@ import javax.inject.Singleton
         }
     }
 
-    @Synchronized fun getGeometries(keys: Collection<ElementKey>): List<ElementGeometryEntry> {
+    @Synchronized suspend fun getGeometries(keys: Collection<ElementKey>): List<ElementGeometryEntry> {
         val originalKeys = keys.filter { !deletedElements.contains(it) && !updatedGeometries.containsKey(it) }
         val updatedGeometries = keys.mapNotNull { key ->
             updatedGeometries[key]?.let { ElementGeometryEntry(key.type, key.id, it) }
@@ -172,7 +172,7 @@ import javax.inject.Singleton
         return updatedGeometries + originalGeometries
     }
 
-    @Synchronized fun getMapDataWithGeometry(bbox: BoundingBox): MapDataWithGeometry {
+    @Synchronized suspend fun getMapDataWithGeometry(bbox: BoundingBox): MapDataWithGeometry {
         val mapDataWithGeometry = mapDataController.getMapDataWithGeometry(bbox)
         modifyBBoxMapData(bbox, mapDataWithGeometry)
         return mapDataWithGeometry
@@ -394,7 +394,7 @@ import javax.inject.Singleton
     }
 
     /** Return the key of elements that the given edit created. May be empty. */
-    private fun getCreatedElementKeys(edit: ElementEdit): List<ElementKey> {
+    private suspend fun getCreatedElementKeys(edit: ElementEdit): List<ElementKey> {
         val counts = edit.action.newElementsCount
         val idProvider = elementEditsController.getIdProvider(edit.id)
         val elementKeys = ArrayList<ElementKey>(counts.nodes + counts.ways + counts.relations)

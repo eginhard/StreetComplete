@@ -8,7 +8,6 @@ import android.widget.Toast
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.bundleOf
-import androidx.lifecycle.lifecycleScope
 import androidx.preference.Preference
 import androidx.preference.PreferenceFragmentCompat
 import androidx.preference.PreferenceManager
@@ -21,7 +20,6 @@ import de.westnordost.streetcomplete.data.osm.mapdata.MapDataController
 import de.westnordost.streetcomplete.data.osmnotes.NoteController
 import de.westnordost.streetcomplete.data.quest.QuestController
 import de.westnordost.streetcomplete.ktx.toast
-import kotlinx.coroutines.*
 import javax.inject.Inject
 
 /** Shows the settings screen */
@@ -57,9 +55,7 @@ class SettingsFragment : PreferenceFragmentCompat(),
             context?.let {
                 AlertDialog.Builder(it)
                     .setMessage(R.string.delete_cache_dialog_message)
-                    .setPositiveButton(R.string.delete_confirmation) { _, _ ->
-                        lifecycleScope.launch { deleteCache() }
-                    }
+                    .setPositiveButton(R.string.delete_confirmation) { _, _ -> deleteCache() }
                     .setNegativeButton(android.R.string.cancel, null)
                     .show()
             }
@@ -128,7 +124,7 @@ class SettingsFragment : PreferenceFragmentCompat(),
         }
     }
 
-    private suspend fun deleteCache() = withContext(Dispatchers.IO) {
+    private fun deleteCache() {
         downloadedTilesDao.removeAll()
         val now = System.currentTimeMillis()
         noteController.deleteAllOlderThan(now)

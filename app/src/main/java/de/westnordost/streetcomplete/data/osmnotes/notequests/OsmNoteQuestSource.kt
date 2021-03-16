@@ -9,10 +9,10 @@ interface OsmNoteQuestSource {
     }
 
     /** get single quest by id */
-    fun get(questId: Long): OsmNoteQuest?
+    suspend fun get(questId: Long): OsmNoteQuest?
 
     /** Get all quests in given bounding box */
-    fun getAllVisibleInBBox(bbox: BoundingBox): List<OsmNoteQuest>
+    suspend fun getAllVisibleInBBox(bbox: BoundingBox): List<OsmNoteQuest>
 
     fun addListener(listener: Listener)
     fun removeListener(listener: Listener)

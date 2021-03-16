@@ -45,7 +45,7 @@ class LinksFragment : Fragment(R.layout.fragment_links) {
             val viewWidth = view.width.toFloat().toDp(ctx)
             val spanCount = (viewWidth / minCellWidth).toInt()
 
-            val links = withContext(Dispatchers.IO) { userLinksSource.getLinks() }
+            val links = userLinksSource.getLinks()
             val adapter = GroupedLinksAdapter(links, this@LinksFragment::openUrl)
             // headers should span the whole width
             val spanSizeLookup = object : GridLayoutManager.SpanSizeLookup() {

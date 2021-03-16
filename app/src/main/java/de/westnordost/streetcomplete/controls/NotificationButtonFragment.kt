@@ -55,10 +55,12 @@ class NotificationButtonFragment : Fragment(R.layout.fragment_notification_butto
 
     override fun onStart() {
         super.onStart()
-        val numberOfNotifications = notificationsSource.getNumberOfNotifications()
-        notificationButton.notificationsCount = numberOfNotifications
-        notificationButton.isGone = numberOfNotifications <= 0
         notificationsSource.addListener(notificationsSourceUpdateListener)
+        lifecycleScope.launch {
+            val numberOfNotifications = notificationsSource.getNumberOfNotifications()
+            notificationButton.notificationsCount = numberOfNotifications
+            notificationButton.isGone = numberOfNotifications <= 0
+        }
     }
 
     override fun onStop() {

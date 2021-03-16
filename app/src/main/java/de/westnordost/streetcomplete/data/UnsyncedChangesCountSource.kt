@@ -14,7 +14,12 @@ import javax.inject.Singleton
     private val noteEditsSource: NoteEditsSource,
     private val elementEditsSource: ElementEditsSource
 ) {
-    private val listeners: MutableList<UnsyncedChangesCountListener> = CopyOnWriteArrayList()
+    interface Listener {
+        fun onIncreased()
+        fun onDecreased()
+    }
+
+    private val listeners = CopyOnWriteArrayList<Listener>()
 
     val count: Int get() = unsyncedNotesCount + unsyncedElementsCount
 
@@ -76,19 +81,14 @@ import javax.inject.Singleton
     }
 
     private fun onUpdate(diff: Int) {
-        if (diff > 0) listeners.forEach { it.onUnsyncedChangesCountIncreased() }
-        else if (diff < 0) listeners.forEach { it.onUnsyncedChangesCountDecreased() }
+        if (diff > 0) listeners.forEach { it.onIncreased() }
+        else if (diff < 0) listeners.forEach { it.onDecreased() }
     }
 
-    fun addListener(listener: UnsyncedChangesCountListener) {
+    fun addListener(listener: Listener) {
         listeners.add(listener)
     }
-    fun removeListener(listener: UnsyncedChangesCountListener) {
+    fun removeListener(listener: Listener) {
         listeners.remove(listener)
     }
-}
-
-interface UnsyncedChangesCountListener {
-    fun onUnsyncedChangesCountIncreased()
-    fun onUnsyncedChangesCountDecreased()
 }

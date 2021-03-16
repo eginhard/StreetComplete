@@ -63,9 +63,7 @@ class AchievementsFragment : Fragment(R.layout.fragment_achievements) {
             achievementsList.addItemDecoration(GridLayoutSpacingItemDecoration(itemSpacing))
             achievementsList.clipToPadding = false
 
-            val achievements = withContext(Dispatchers.IO) {
-                userAchievementsSource.getAchievements()
-            }
+            val achievements = userAchievementsSource.getAchievements()
             achievementsList.adapter = AchievementsAdapter(achievements)
 
             emptyText.isGone = achievements.isNotEmpty()

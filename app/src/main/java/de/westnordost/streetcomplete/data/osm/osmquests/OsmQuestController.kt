@@ -271,13 +271,13 @@ import javax.inject.Singleton
         return true
     }
 
-    private fun getBlacklistedPositions(bbox: BoundingBox): Set<LatLon> =
+    private suspend fun getBlacklistedPositions(bbox: BoundingBox): Set<LatLon> =
         notesSource
             .getAllPositions(bbox)
             .map { it.truncateTo5Decimals() }
             .toSet()
 
-    private fun getHiddenQuests(): Set<OsmQuestKey> =
+    private suspend fun getHiddenQuests(): Set<OsmQuestKey> =
         hiddenDB.getAll().toSet()
 
     /** Mark the quest as hidden by user interaction */
@@ -306,16 +306,16 @@ import javax.inject.Singleton
         return result
     }
 
-    override fun get(questId: Long): OsmQuest? {
+    override suspend fun get(questId: Long): OsmQuest? {
         val entry = db.get(questId) ?: return null
         val geometry = mapDataSource.getGeometry(entry.elementType, entry.elementId)
         return createOsmQuest(entry, geometry)
     }
 
-    override fun getAllInBBoxCount(bbox: BoundingBox): Int =
+    override suspend fun getAllInBBoxCount(bbox: BoundingBox): Int =
         db.getAllInBBoxCount(bbox)
 
-    override fun getAllVisibleInBBox(bbox: BoundingBox, questTypes: Collection<String>?): List<OsmQuest> {
+    override suspend fun getAllVisibleInBBox(bbox: BoundingBox, questTypes: Collection<String>?): List<OsmQuest> {
         val entries = db.getAllInBBox(bbox, questTypes)
 
         val elementKeys = HashSet<ElementKey>()

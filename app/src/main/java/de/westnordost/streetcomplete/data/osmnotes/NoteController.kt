@@ -84,9 +84,9 @@ import javax.inject.Singleton
         return ids.size
     }
 
-    fun getAllPositions(bbox: BoundingBox): List<LatLon> = dao.getAllPositions(bbox)
-    fun getAll(bbox: BoundingBox): List<Note> = dao.getAll(bbox)
-    fun getAll(noteIds: Collection<Long>): List<Note> = dao.getAll(noteIds)
+    suspend fun getAllPositions(bbox: BoundingBox): List<LatLon> = dao.getAllPositions(bbox)
+    suspend fun getAll(bbox: BoundingBox): List<Note> = dao.getAll(bbox)
+    suspend fun getAll(noteIds: Collection<Long>): List<Note> = dao.getAll(noteIds)
 
     /* ------------------------------------ Listeners ------------------------------------------- */
 

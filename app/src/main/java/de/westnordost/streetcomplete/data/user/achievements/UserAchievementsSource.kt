@@ -11,7 +11,7 @@ import javax.inject.Singleton
 ) {
     private val achievementsById = allAchievements.associateBy { it.id }
 
-    fun getAchievements(): List<Pair<Achievement, Int>> {
+    suspend fun getAchievements(): List<Pair<Achievement, Int>> {
         return achievementsDao.getAll().mapNotNull {
             val achievement = achievementsById[it.key]
             if (achievement != null) achievement to it.value else null

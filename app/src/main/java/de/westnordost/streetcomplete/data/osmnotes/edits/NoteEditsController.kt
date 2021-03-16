@@ -39,28 +39,28 @@ import javax.inject.Singleton
         onAddedEdit(edit)
     }
 
-    override fun getAllUnsynced(): List<NoteEdit> =
+    override suspend fun getAllUnsynced(): List<NoteEdit> =
         editsDB.getAllUnsynced()
 
-    fun getOldestUnsynced(): NoteEdit? =
+    suspend fun getOldestUnsynced(): NoteEdit? =
         editsDB.getOldestUnsynced()
 
-    override fun getUnsyncedCount(): Int =
+    override suspend fun getUnsyncedCount(): Int =
         editsDB.getUnsyncedCount()
 
-    override fun getAllUnsyncedForNote(noteId: Long): List<NoteEdit> =
+    override suspend fun getAllUnsyncedForNote(noteId: Long): List<NoteEdit> =
         editsDB.getAllUnsyncedForNote(noteId)
 
-    override fun getAllUnsyncedForNotes(noteIds: Collection<Long>): List<NoteEdit> =
+    override suspend fun getAllUnsyncedForNotes(noteIds: Collection<Long>): List<NoteEdit> =
         editsDB.getAllUnsyncedForNotes(noteIds)
 
-    override fun getAllUnsynced(bbox: BoundingBox): List<NoteEdit> =
+    override suspend fun getAllUnsynced(bbox: BoundingBox): List<NoteEdit> =
         editsDB.getAllUnsynced(bbox)
 
-    override fun getAllUnsyncedPositions(bbox: BoundingBox): List<LatLon> =
+    override suspend fun getAllUnsyncedPositions(bbox: BoundingBox): List<LatLon> =
         editsDB.getAllUnsyncedPositions(bbox)
 
-    fun getOldestNeedingImagesActivation(): NoteEdit? =
+    suspend fun getOldestNeedingImagesActivation(): NoteEdit? =
         editsDB.getOldestNeedingImagesActivation()
 
     @Synchronized fun imagesActivated(id: Long): Boolean =
@@ -82,7 +82,7 @@ import javax.inject.Singleton
     @Synchronized fun deleteSyncedOlderThan(timestamp: Long): Int =
         editsDB.deleteSyncedOlderThan(timestamp)
 
-    private fun delete(edit: NoteEdit) {
+    private suspend fun delete(edit: NoteEdit) {
         if (editsDB.delete(edit.id)) {
             onDeletedEdit(edit)
         }

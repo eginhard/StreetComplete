@@ -62,14 +62,18 @@ class UndoButtonFragment : Fragment(R.layout.fragment_undo_button) {
 
         undoButton.setOnClickListener {
             undoButton.isEnabled = false
-            val change = elementEditsController.getMostRecentUndoableEdit()
-            if (change != null) confirmUndo(change)
+            lifecycleScope.launch {
+                val change = elementEditsController.getMostRecentUndoableEdit()
+                if (change != null) confirmUndo(change)
+            }
         }
     }
 
     override fun onStart() {
         super.onStart()
-        updateUndoButtonVisibility()
+        lifecycleScope.launch {
+            updateUndoButtonVisibility()
+        }
         updateUndoButtonEnablement(true)
         elementEditsController.addListener(osmElementChangesListener)
         uploadProgressSource.addUploadProgressListener(uploadProgressListener)
@@ -83,7 +87,7 @@ class UndoButtonFragment : Fragment(R.layout.fragment_undo_button) {
 
     /* ------------------------------------------------------------------------------------------ */
 
-    private fun confirmUndo(edit: ElementEdit) {
+    private suspend fun confirmUndo(edit: ElementEdit) {
         val ctx = context ?: return
         val element = mapDataSource.get(edit.elementType, edit.elementId)
 
@@ -105,7 +109,7 @@ class UndoButtonFragment : Fragment(R.layout.fragment_undo_button) {
             .show()
     }
 
-    private fun updateUndoButtonVisibility() {
+    private suspend fun updateUndoButtonVisibility() {
         view?.isGone = elementEditsController.getMostRecentUndoableEdit() == null
     }
 
@@ -113,13 +117,13 @@ class UndoButtonFragment : Fragment(R.layout.fragment_undo_button) {
         undoButton.isEnabled = enable && !uploadProgressSource.isUploadInProgress
     }
 
-    private fun animateInIfAnythingToUndo() {
+    private suspend fun animateInIfAnythingToUndo() {
         if (!undoButton.isVisible && elementEditsController.getMostRecentUndoableEdit() != null) {
             undoButton.popIn()
         }
     }
 
-    private fun animateOutIfNothingLeftToUndo() {
+    private suspend fun animateOutIfNothingLeftToUndo() {
         if (undoButton.isVisible && elementEditsController.getMostRecentUndoableEdit() == null) {
             undoButton.popOut().withEndAction { undoButton.visibility = View.INVISIBLE }
         }

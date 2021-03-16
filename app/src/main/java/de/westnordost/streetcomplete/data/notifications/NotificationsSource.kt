@@ -50,7 +50,7 @@ import javax.inject.Singleton
         listeners.remove(listener)
     }
 
-    fun getNumberOfNotifications(): Int {
+    suspend fun getNumberOfNotifications(): Int {
         val hasUnreadMessages = userStore.unreadMessagesCount > 0
         val lastVersion = prefs.getString(Prefs.LAST_VERSION, null)
         val hasNewVersion = lastVersion != null && BuildConfig.VERSION_NAME != lastVersion

@@ -70,7 +70,7 @@ import javax.inject.Singleton
         noteEditsSource.addListener(noteEditsListener)
     }
 
-    fun get(noteId: Long): Note? {
+    suspend fun get(noteId: Long): Note? {
         val noteEdits = noteEditsSource.getAllUnsyncedForNote(noteId)
         var note = noteController.get(noteId)
         for (noteEdit in noteEdits) {
@@ -86,17 +86,17 @@ import javax.inject.Singleton
         return note
     }
 
-    fun getAllPositions(bbox: BoundingBox): List<LatLon> =
+    suspend fun getAllPositions(bbox: BoundingBox): List<LatLon> =
         noteController.getAllPositions(bbox) +
         noteEditsSource.getAllUnsyncedPositions(bbox)
 
-    fun getAll(bbox: BoundingBox): Collection<Note> =
+    suspend fun getAll(bbox: BoundingBox): Collection<Note> =
         editsAppliedToNotes(
             noteController.getAll(bbox),
             noteEditsSource.getAllUnsynced(bbox)
         )
 
-    fun getAll(noteIds: Collection<Long>): Collection<Note> =
+    suspend fun getAll(noteIds: Collection<Long>): Collection<Note> =
         editsAppliedToNotes(
             noteController.getAll(noteIds),
             noteEditsSource.getAllUnsyncedForNotes(noteIds)

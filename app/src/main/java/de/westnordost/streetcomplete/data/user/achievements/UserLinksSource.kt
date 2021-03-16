@@ -11,6 +11,6 @@ import javax.inject.Singleton
 ) {
     private val linksById = allLinks.associateBy { it.id }
 
-    fun getLinks(): List<Link> =
+    suspend fun getLinks(): List<Link> =
         userLinksDao.getAll().mapNotNull { linksById[it] }
 }

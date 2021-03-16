@@ -13,7 +13,6 @@ import androidx.lifecycle.lifecycleScope
 import de.westnordost.streetcomplete.Injector
 import de.westnordost.streetcomplete.R
 import de.westnordost.streetcomplete.data.osmnotes.NotesModule
-import de.westnordost.streetcomplete.data.UnsyncedChangesCountListener
 import de.westnordost.streetcomplete.data.UnsyncedChangesCountSource
 import de.westnordost.streetcomplete.data.user.*
 import de.westnordost.streetcomplete.data.user.achievements.UserAchievementsDao
@@ -37,9 +36,9 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
 
     private lateinit var anonAvatar: Bitmap
 
-    private val unsyncedChangesCountListener = object : UnsyncedChangesCountListener {
-        override fun onUnsyncedChangesCountIncreased() { lifecycleScope.launch { updateUnpublishedQuestsText() } }
-        override fun onUnsyncedChangesCountDecreased() { lifecycleScope.launch { updateUnpublishedQuestsText() } }
+    private val unsyncedChangesCountListener = object : UnsyncedChangesCountSource.Listener {
+        override fun onIncreased() { lifecycleScope.launch { updateUnpublishedQuestsText() } }
+        override fun onDecreased() { lifecycleScope.launch { updateUnpublishedQuestsText() } }
     }
     private val questStatisticsDaoListener = object : QuestStatisticsDao.Listener {
         override fun onAddedOne(questType: String) { lifecycleScope.launch { updateSolvedQuestsText() }}
@@ -113,11 +112,11 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
     }
 
     private suspend fun updateSolvedQuestsText() {
-        solvedQuestsText.text = withContext(Dispatchers.IO) { questStatisticsDao.getTotalAmount().toString() }
+        solvedQuestsText.text = questStatisticsDao.getTotalAmount().toString()
     }
 
     private suspend fun updateUnpublishedQuestsText() {
-        val unsyncedChanges = withContext(Dispatchers.IO) { unsyncedChangesCountSource.count }
+        val unsyncedChanges = unsyncedChangesCountSource.count
         unpublishedQuestsText.text = getString(R.string.unsynced_quests_description, unsyncedChanges)
         unpublishedQuestsText.isGone = unsyncedChanges <= 0
     }
@@ -128,16 +127,14 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
         daysActiveText.text = daysActive.toString()
     }
 
-    private fun updateGlobalRankText() {
+    private suspend fun updateGlobalRankText() {
         val rank = userStore.rank
         globalRankContainer.isGone = rank <= 0 || questStatisticsDao.getTotalAmount() <= 100
         globalRankText.text = "#$rank"
     }
 
     private suspend fun updateLocalRankText() {
-        val statistics = withContext(Dispatchers.IO) {
-            countryStatisticsDao.getCountryWithBiggestSolvedCount()
-        }
+        val statistics = countryStatisticsDao.getCountryWithBiggestSolvedCount()
         if (statistics == null) localRankContainer.isGone = true
         else {
             val shouldShow = statistics.rank != null && statistics.rank > 0 && statistics.solvedCount > 50
@@ -149,7 +146,7 @@ class ProfileFragment : Fragment(R.layout.fragment_profile) {
     }
 
     private suspend fun updateAchievementLevelsText() {
-        val levels = withContext(Dispatchers.IO) { userAchievementsDao.getAll().values.sum() }
+        val levels = userAchievementsDao.getAll().values.sum()
         achievementLevelsContainer.isGone = levels <= 0
         achievementLevelsText.text = "$levels"
     }

@@ -6,7 +6,6 @@ import androidx.lifecycle.lifecycleScope
 import de.westnordost.streetcomplete.Injector
 import de.westnordost.streetcomplete.Prefs
 import de.westnordost.streetcomplete.R
-import de.westnordost.streetcomplete.data.UnsyncedChangesCountListener
 import de.westnordost.streetcomplete.data.UnsyncedChangesCountSource
 import de.westnordost.streetcomplete.data.upload.UploadProgressListener
 import de.westnordost.streetcomplete.data.upload.UploadProgressSource
@@ -29,9 +28,9 @@ class AnswersCounterFragment : Fragment(R.layout.fragment_answers_counter) {
         override fun onFinished() { lifecycleScope.launch { updateProgress(false) } }
     }
 
-    private val unsyncedChangesCountListener = object : UnsyncedChangesCountListener {
-        override fun onUnsyncedChangesCountIncreased() { lifecycleScope.launch { updateCount(true) }}
-        override fun onUnsyncedChangesCountDecreased() { lifecycleScope.launch { updateCount(true) }}
+    private val unsyncedChangesCountListener = object : UnsyncedChangesCountSource.Listener {
+        override fun onIncreased() { lifecycleScope.launch { updateCount(true) }}
+        override fun onDecreased() { lifecycleScope.launch { updateCount(true) }}
     }
 
     private val questStatisticsListener = object : QuestStatisticsDao.Listener {
@@ -52,7 +51,7 @@ class AnswersCounterFragment : Fragment(R.layout.fragment_answers_counter) {
          *  upload button, and shows the uploaded + uploadable amount of quests.
          */
         updateProgress(uploadProgressSource.isUploadInProgress)
-        updateCount(false)
+        lifecycleScope.launch { updateCount(false) }
         if (isAutosync) {
             uploadProgressSource.addUploadProgressListener(uploadProgressListener)
             unsyncedChangesCountSource.addListener(unsyncedChangesCountListener)
@@ -74,7 +73,7 @@ class AnswersCounterFragment : Fragment(R.layout.fragment_answers_counter) {
         answersCounterView.showProgress = isUploadInProgress && isAutosync
     }
 
-    private fun updateCount(animated: Boolean) {
+    private suspend fun updateCount(animated: Boolean) {
         /* if autosync is on, show the uploaded count + the to-be-uploaded count (but only those
            uploadables that will be part of the statistics, so no note stuff) */
         val amount = questStatisticsDao.getTotalAmount() + if (isAutosync) unsyncedChangesCountSource.solvedCount else 0

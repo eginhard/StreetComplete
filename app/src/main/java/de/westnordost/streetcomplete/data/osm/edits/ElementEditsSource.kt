@@ -10,10 +10,10 @@ interface ElementEditsSource {
 
     /** Count of unsynced edits that count towards the statistics. That is, reverts of edits
      *  count negative */
-    fun getPositiveUnsyncedCount(): Int
+    suspend fun getPositiveUnsyncedCount(): Int
 
     /** Count of unsynced a.k.a to-be-uploaded edits */
-    fun getUnsyncedCount(): Int
+    suspend fun getUnsyncedCount(): Int
 
     fun addListener(listener: Listener)
     fun removeListener(listener: Listener)
