@@ -26,6 +26,7 @@ import javax.inject.Singleton
     private val countryStatisticsDao: CountryStatisticsDao,
     private val osmConnection: OsmConnection
 ): CoroutineScope by CoroutineScope(Dispatchers.Default), LoginStatusSource, UserAvatarUpdateSource {
+
     private val loginStatusListeners: MutableList<UserLoginStatusListener> = CopyOnWriteArrayList()
     private val userAvatarListeners: MutableList<UserAvatarListener> = CopyOnWriteArrayList()
 

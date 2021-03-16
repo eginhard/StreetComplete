@@ -3,7 +3,6 @@ package de.westnordost.streetcomplete.data.quest
 import de.westnordost.streetcomplete.testutils.any
 import de.westnordost.streetcomplete.data.osm.edits.ElementEdit
 import de.westnordost.streetcomplete.data.osm.edits.ElementEditsSource
-import de.westnordost.streetcomplete.data.UnsyncedChangesCountListener
 import de.westnordost.streetcomplete.data.UnsyncedChangesCountSource
 import de.westnordost.streetcomplete.data.osm.osmquests.OsmQuestSource
 import de.westnordost.streetcomplete.data.osmnotes.edits.NoteEditsSource
@@ -27,7 +26,7 @@ class UnsyncedChangesCountSourceTest {
     private lateinit var noteEditsListener: NoteEditsSource.Listener
     private lateinit var elementEditsListener: ElementEditsSource.Listener
 
-    private lateinit var listener: UnsyncedChangesCountListener
+    private lateinit var listener: UnsyncedChangesCountSource.Listener
 
     private lateinit var source: UnsyncedChangesCountSource
 
@@ -69,7 +68,7 @@ class UnsyncedChangesCountSourceTest {
     }
 
     @Test fun count() {
-        assertEquals(baseCount, source.count)
+        assertEquals(baseCount, source.getCount())
     }
 
     @Test fun `add unsynced element change triggers listener`() {
@@ -117,11 +116,11 @@ class UnsyncedChangesCountSourceTest {
 
     private fun verifyDecreased() {
         verify(listener).onUnsyncedChangesCountDecreased()
-        assertEquals(baseCount - 1, source.count)
+        assertEquals(baseCount - 1, source.getCount())
     }
 
     private fun verifyIncreased() {
         verify(listener).onUnsyncedChangesCountIncreased()
-        assertEquals(baseCount + 1, source.count)
+        assertEquals(baseCount + 1, source.getCount())
     }
 }
