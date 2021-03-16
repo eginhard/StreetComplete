@@ -5,46 +5,47 @@ import de.westnordost.streetcomplete.data.ApplicationDbTestCase
 import de.westnordost.streetcomplete.data.osm.mapdata.WayDao
 import de.westnordost.streetcomplete.quests.oneway_suspects.data.WayTrafficFlowDao
 import de.westnordost.streetcomplete.util.KryoSerializer
+import kotlinx.coroutines.runBlocking
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
 
-class WayTrafficFlowSegmentsApiTest : ApplicationDbTestCase() {
+class WayTrafficFlowDaoTest : ApplicationDbTestCase() {
 
     private lateinit var dao: WayTrafficFlowDao
 
     @Before fun createDao() {
-        dao = WayTrafficFlowDao(dbHelper)
+        dao = WayTrafficFlowDao(database)
     }
 
-    @Test fun putGetTrue() {
+    @Test fun putGetTrue() = runBlocking {
         dao.put(123L, true)
         assertTrue(dao.isForward(123L)!!)
     }
 
-    @Test fun putGetFalse() {
+    @Test fun putGetFalse() = runBlocking {
         dao.put(123L, false)
         assertFalse(dao.isForward(123L)!!)
     }
 
-    @Test fun getNull() {
+    @Test fun getNull() = runBlocking {
         assertNull(dao.isForward(123L))
     }
 
-    @Test fun delete() {
+    @Test fun delete() = runBlocking {
         dao.put(123L, false)
         dao.delete(123L)
         assertNull(dao.isForward(123L))
     }
 
-    @Test fun overwrite() {
+    @Test fun overwrite() = runBlocking {
         dao.put(123L, true)
         dao.put(123L, false)
         assertFalse(dao.isForward(123L)!!)
     }
 
-    @Test fun deleteUnreferenced() {
-        val wayDao = WayDao(dbHelper, KryoSerializer())
+    @Test fun deleteUnreferenced() = runBlocking {
+        val wayDao = WayDao(database, KryoSerializer())
 
         wayDao.put(OsmWay(1, 0, mutableListOf(), null))
         wayDao.put(OsmWay(2, 0, mutableListOf(), null))
